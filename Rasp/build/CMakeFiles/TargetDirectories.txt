@@ -1,3 +1,0 @@
-/home/joobortolace/Documentos/Lab_EXP/Rasp/build/CMakeFiles/Rasp.dir
-/home/joobortolace/Documentos/Lab_EXP/Rasp/build/CMakeFiles/edit_cache.dir
-/home/joobortolace/Documentos/Lab_EXP/Rasp/build/CMakeFiles/rebuild_cache.dir
