@@ -110,15 +110,15 @@ namespace Raspberry
                 digitalWrite(M2_B, LOW);
                 break;
             case DIAGONAL_ATRAS_DIREITA:
-                digitalWrite(M1_A, HIGH);
-                digitalWrite(M1_B, LOW);
-                digitalWrite(M2_A, LOW);
-                digitalWrite(M2_B, LOW);
-                break;
-            case DIAGONAL_ATRAS_ESQUERDA:
                 digitalWrite(M1_A, LOW);
                 digitalWrite(M1_B, LOW);
                 digitalWrite(M2_A, HIGH);
+                digitalWrite(M2_B, LOW);
+                break;
+            case DIAGONAL_ATRAS_ESQUERDA:
+                digitalWrite(M1_A, HIGH);
+                digitalWrite(M1_B, LOW);
+                digitalWrite(M2_A, LOW);
                 digitalWrite(M2_B, LOW);
                 break;
             case GIRA_ESQUERDA:
