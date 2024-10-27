@@ -1,3 +1,0 @@
-/home/joobortolace/Documentos/Lab_EXP/Client/build/CMakeFiles/Client.dir
-/home/joobortolace/Documentos/Lab_EXP/Client/build/CMakeFiles/edit_cache.dir
-/home/joobortolace/Documentos/Lab_EXP/Client/build/CMakeFiles/rebuild_cache.dir
