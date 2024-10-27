@@ -1,5 +1,5 @@
 #include "Raspberry.hpp"
-#include "Client.hpp"
+#include "Server.hpp"
 
 #define CAMERA_FRAME_HEIGHT     240
 #define CAMERA_FRAME_WIDTH      320
@@ -10,11 +10,11 @@
 
 Raspberry::Teclado comando = Raspberry::Teclado::NAO_SELECIONADO;
 
-void mouse_callback(int event, int x, int _y, int flags, void *usedata);
+void mouse_callback(int event, int x, int y, int flags, void *usedata);
 
 int main(int argc, char *argv[])
 {
-    if (argc < 3) {
+    if (argc < 2) {
         Raspberry::erro("Poucos argumentos.");
     }
 
@@ -25,14 +25,14 @@ int main(int argc, char *argv[])
     Mat_<Raspberry::Cor> teclado(TECLADO_WIDTH, TECLADO_HEIGHT, Paleta::blue01);
     
     try {
-        // Conecta a Raspberry
-        Client client(argv[1], argv[2]);
-        client.waitConnection();
+        // Hospeda o Servidor
+        Server server(argv[1], 15);
+        server.waitConnection();
 
         // Recebe os quadros e envia o comando
         while (true) {
-            client.receiveImageCompactada(frameBuf);
-            client.sendBytes(sizeof(Raspberry::Teclado),(Raspberry::Byte *) &comando);  
+            server.receiveImageCompactada(frameBuf);
+            server.sendBytes(sizeof(Raspberry::Teclado),(Raspberry::Byte *) &comando);  
 
             // Coloca o teclado 
             hconcat(teclado, frameBuf, frameBuf);  
@@ -53,6 +53,9 @@ int main(int argc, char *argv[])
 
 void mouse_callback(int event, int x, int y, int flags, void *usedata)
 {
+    (void)flags;
+    (void)usedata;
+    
     if (event == EVENT_LBUTTONDOWN) {
         int col = x / BUTTON_WIDTH;
         int row = y / BUTTON_HEIGHT;
