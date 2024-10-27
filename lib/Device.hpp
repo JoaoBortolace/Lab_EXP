@@ -30,7 +30,7 @@ class Device
         virtual void sendBytes(uint32_t numBytes, const Raspberry::Byte* txBuffer) = 0;
         virtual void receiveBytes(uint32_t numBytes, Raspberry::Byte* rxBuffer) = 0;
 
-        void setCompressaoQualidade(uint8_t porcentagemComp);
+        void setCompressaoQualidade(int8_t porcentagemComp);
 
         void sendUInt(const uint32_t value);
         void receiveUInt(uint32_t& value);

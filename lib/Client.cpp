@@ -1,5 +1,8 @@
 #include "Client.hpp"
 
+/*
+ * Construi um client TCP-IP IPv4, caso não seja possivel joga uma excessão
+ */
 Client::Client(const char* serverName, const char* port)
 {
     // Obtem um socket
@@ -28,6 +31,9 @@ Client::~Client()
     }
 }
 
+/*
+ * Espera até conectar-se ao servidor correspondete ao endereço e porta passados no construtor, caso não seja possivel, joga um excessão
+ */
 void Client::waitConnection()
 {
     // Conecta ao servidor
@@ -36,6 +42,9 @@ void Client::waitConnection()
     }
 }
 
+/*
+ * Transmite um buffer de bytes, caso não seja possivel, joga um excessão
+ */
 void Client::sendBytes(uint32_t numBytes, const Raspberry::Byte* txBuffer)
 {
     size_t totalSend = 0;
@@ -52,6 +61,9 @@ void Client::sendBytes(uint32_t numBytes, const Raspberry::Byte* txBuffer)
     }
 }
 
+/*
+ * Recebe um buffer de bytes, caso não seja possivel, joga um excessão
+ */
 void Client::receiveBytes(uint32_t numBytes, Raspberry::Byte* rxBuffer)
 {
     size_t totalRecv = 0;

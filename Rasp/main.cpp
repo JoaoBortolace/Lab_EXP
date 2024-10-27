@@ -7,11 +7,6 @@
 #include "Raspberry.hpp"
 #include "Server.hpp"
 
-/* -------- Defines -------- */
-#define CAMERA_VIDEO        0
-#define CAMERA_FRAME_WIDTH  320
-#define CAMERA_FRAME_HEIGHT 240
-
 /* -------- Main -------- */
 int main(int argc, char *argv[])
 {
