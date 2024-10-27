@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.16)
 set(ProjectName Rasp)
 project(${ProjectName})
 
+# Diretivas de compilação
+add_compile_definitions(RASP_PINS)
+
 # Diretório atual
 set(CURRENT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 # Obter o diretório pai do diretório atual
@@ -35,18 +38,29 @@ endif()
 # Encontre o pacote OpenCV
 find_package(OpenCV REQUIRED)
 find_package(WiringPi REQUIRED)
+find_package(Threads REQUIRED) 
 
 if(NOT OpenCV_FOUND)
     message(FATAL_ERROR "OpenCV not found!")
 endif()
 
+if(NOT WiringPi_FOUND)
+    message(FATAL_ERROR "WiringPi not found!")
+endif()
+
+if(NOT Threads_FOUND)
+    message(FATAL_ERROR "Threads not found!")
+endif()
+
 # Adiciona a pasta dos arquivos auxiliares
 include_directories(${LIB_DIR})
 file(GLOB programa "${LIB_DIR}/*.cpp")
+include_directories(${WIRINGPI_INCLUDE_DIRS}) 
 
-add_executable(${ProjectName} main.cpp ${programa})
-
+# Adiciona a bibliotecas
 target_link_libraries(${ProjectName} ${OpenCV_LIBS})
+target_link_libraries(${ProjectName} ${WIRINGPI_LIBRARIES}) 
+target_link_libraries(${ProjectName} ${CMAKE_THREAD_LIBS_INIT}) 
 
-# Adiciona a bi
-target_link_libraries(${ProjectName} ${WIRINGPI_LIBRARIES})
+# Adicionas os executaveis
+add_executable(${ProjectName} main.cpp ${programa})

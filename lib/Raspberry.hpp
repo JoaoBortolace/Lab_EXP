@@ -2,8 +2,6 @@
 #ifndef RASPBERRY_HPP
 #define RASPBERRY_HPP
 
-#define RASP_PINS
-
 #include <opencv2/opencv.hpp>
 #include <cstdio>
 #include <cstdlib>
