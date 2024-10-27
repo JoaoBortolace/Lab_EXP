@@ -10,7 +10,7 @@
 
 Raspberry::Teclado comando = Raspberry::Teclado::NAO_SELECIONADO;
 
-void mouse_callback(int event, int x, int _y, int flags, void *usedata);
+void mouse_callback(int event, int x, int y, int flags, void *usedata);
 
 int main(int argc, char *argv[])
 {
@@ -53,6 +53,9 @@ int main(int argc, char *argv[])
 
 void mouse_callback(int event, int x, int y, int flags, void *usedata)
 {
+    (void)flags;
+    (void)usedata;
+    
     if (event == EVENT_LBUTTONDOWN) {
         int col = x / BUTTON_WIDTH;
         int row = y / BUTTON_HEIGHT;
