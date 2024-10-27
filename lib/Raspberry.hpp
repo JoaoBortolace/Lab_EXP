@@ -250,7 +250,7 @@ namespace Raspberry
     /*
      * Obtém-se qual é o comando equivalente a posição do clique, se for válido, também altera a cor da seta correspondete para vermelho 
      */
-    inline void getComando(uint32_t col, uint32_t row, Mat_<Cor>& teclado, Teclado comando) 
+    inline void getComando(uint32_t col, uint32_t row, Mat_<Cor>& teclado, Teclado& comando) 
     {
         // Primeiro seleciona qual coluna foi escolhida
         switch (col) {

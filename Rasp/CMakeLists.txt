@@ -37,7 +37,7 @@ endif()
 
 # Encontre o pacote OpenCV
 find_package(OpenCV REQUIRED)
-#find_package(WiringPi REQUIRED)
+find_package(WiringPi REQUIRED)
 find_package(Threads REQUIRED) 
 
 if(NOT OpenCV_FOUND)
