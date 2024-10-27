@@ -11,18 +11,10 @@ opencv2/opencv.hpp
 -
 Raspberry.hpp
 /home/pi/Documents/Lab_EXP/Rasp/Raspberry.hpp
-Server.hpp
-/home/pi/Documents/Lab_EXP/Rasp/Server.hpp
-
-/home/pi/Documents/Lab_EXP/lib/Client.cpp
 Client.hpp
-/home/pi/Documents/Lab_EXP/lib/Client.hpp
+/home/pi/Documents/Lab_EXP/Rasp/Client.hpp
 
 /home/pi/Documents/Lab_EXP/lib/Client.hpp
-Device.hpp
-/home/pi/Documents/Lab_EXP/lib/Device.hpp
-
-/home/pi/Documents/Lab_EXP/lib/Device.cpp
 Device.hpp
 /home/pi/Documents/Lab_EXP/lib/Device.hpp
 
@@ -67,12 +59,4 @@ vector
 -
 wiringPi.h
 -
-
-/home/pi/Documents/Lab_EXP/lib/Server.cpp
-Server.hpp
-/home/pi/Documents/Lab_EXP/lib/Server.hpp
-
-/home/pi/Documents/Lab_EXP/lib/Server.hpp
-Device.hpp
-/home/pi/Documents/Lab_EXP/lib/Device.hpp
 

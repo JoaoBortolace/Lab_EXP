@@ -16,7 +16,7 @@ CMakeFiles/Rasp.dir/home/pi/Documents/Lab_EXP/lib/Server.cpp.o: /home/pi/Documen
 CMakeFiles/Rasp.dir/home/pi/Documents/Lab_EXP/lib/Server.cpp.o: /home/pi/Documents/Lab_EXP/lib/Server.hpp
 
 CMakeFiles/Rasp.dir/main.cpp.o: ../main.cpp
+CMakeFiles/Rasp.dir/main.cpp.o: /home/pi/Documents/Lab_EXP/lib/Client.hpp
 CMakeFiles/Rasp.dir/main.cpp.o: /home/pi/Documents/Lab_EXP/lib/Device.hpp
 CMakeFiles/Rasp.dir/main.cpp.o: /home/pi/Documents/Lab_EXP/lib/Raspberry.hpp
-CMakeFiles/Rasp.dir/main.cpp.o: /home/pi/Documents/Lab_EXP/lib/Server.hpp
 

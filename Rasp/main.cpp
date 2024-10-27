@@ -1,6 +1,6 @@
 #include <opencv2/opencv.hpp>
 #include "Raspberry.hpp"
-#include "Server.hpp"
+#include "Client.hpp"
 
 #define CAMERA_VIDEO        0
 #define CAMERA_FRAME_WIDTH  320
@@ -8,7 +8,7 @@
 
 int main(int argc, char *argv[])
 {
-    if (argc < 2) {
+    if (argc < 3) {
         Raspberry::erro("Poucos argumentos.");
     }
 
@@ -27,16 +27,16 @@ int main(int argc, char *argv[])
     
     try {
         // Inicializa o servidor
-        Server server(argv[1], 30);
-        server.waitConnection();
+        Client client(argv[1], argv[2]);
+        client.waitConnection();
 
         // Transmite os quadros
         while(true) {
             camera.read(frameBuf);
-            server.sendImageCompactada(frameBuf);
+            client.sendImageCompactada(frameBuf);
 
             // Recebe o comando
-            server.receiveBytes(sizeof(Raspberry::Teclado),(Raspberry::Byte *) &comando);
+            client.receiveBytes(sizeof(Raspberry::Teclado),(Raspberry::Byte *) &comando);
 
             // Passa o comando para o motor
             Raspberry::motorSetDir(comando);
