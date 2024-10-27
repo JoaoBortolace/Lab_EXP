@@ -42,33 +42,13 @@ namespace Raspberry
         return duration_cast<duration<double>>( system_clock::now().time_since_epoch() ).count();
     }
 
-    using namespace std;
+    #ifdef RASP_PINS
+    #include <wiringPi.h>
 
-    inline void erro(string s1="") 
-    {
-        cerr << s1 << endl;
-        exit(1);
-    }
-
-    inline void print(string s1="")
-    {
-        cout << s1 << endl;
-    }
-
-    inline bool testaVb(const std::vector<Raspberry::Byte>& vb, Raspberry::Byte b) {
-        for (unsigned i=0; i<vb.size(); i++)
-            if (vb[i]!=b) { 
-                return false;
-            }
-        return true;
-    }
-#ifdef RASP_PINS
-#include <wiringPi.h>
-
-#define M1_A    0
-#define M1_B    1
-#define M2_A    2
-#define M2_B    3
+    #define M1_A    0
+    #define M1_B    1
+    #define M2_A    2
+    #define M2_B    3
 
     inline void motorInit()
     {
@@ -145,7 +125,32 @@ namespace Raspberry
                 break;
         }
     }
-#endif
+    #endif
+
+    using namespace std;
+
+    inline void erro(string s1="") 
+    {
+        #ifdef RASP_PINS
+        motorSetDir(Teclado::NAO_FAZ_NADA);
+        #endif
+        
+        cerr << s1 << endl;
+        exit(1);
+    }
+
+    inline void print(string s1="")
+    {
+        cout << s1 << endl;
+    }
+
+    inline bool testaVb(const std::vector<Raspberry::Byte>& vb, Raspberry::Byte b) {
+        for (unsigned i=0; i<vb.size(); i++)
+            if (vb[i]!=b) { 
+                return false;
+            }
+        return true;
+    }
 }
 
 namespace Paleta 
