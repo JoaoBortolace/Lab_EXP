@@ -57,10 +57,10 @@ include_directories(${LIB_DIR})
 file(GLOB programa "${LIB_DIR}/*.cpp")
 include_directories(${WIRINGPI_INCLUDE_DIRS}) 
 
+# Adicionas os executaveis
+add_executable(${ProjectName} main.cpp ${programa})
+
 # Adiciona a bibliotecas
 target_link_libraries(${ProjectName} ${OpenCV_LIBS})
 target_link_libraries(${ProjectName} ${WIRINGPI_LIBRARIES}) 
 target_link_libraries(${ProjectName} ${CMAKE_THREAD_LIBS_INIT}) 
-
-# Adicionas os executaveis
-add_executable(${ProjectName} main.cpp ${programa})

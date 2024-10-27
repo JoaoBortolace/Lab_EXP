@@ -6,7 +6,6 @@
 			[
 				{
 					"build" : ".",
-					"jsonFile" : "directory-.-Release-f5ebdc15457944623624.json",
 					"minimumCMakeVersion" : 
 					{
 						"string" : "3.16"
@@ -39,7 +38,7 @@
 				{
 					"directoryIndex" : 0,
 					"id" : "Rasp::@6890427a1f51a3e7e1df",
-					"jsonFile" : "target-Rasp-Release-cd4ff3513eb60c7768bb.json",
+					"jsonFile" : "target-Rasp-Release-83780a93da268cbe8ea6.json",
 					"name" : "Rasp",
 					"projectIndex" : 0
 				}
@@ -49,12 +48,12 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/home/joobortolace/Documentos/Lab_EXP/Rasp/build",
-		"source" : "/home/joobortolace/Documentos/Lab_EXP/Rasp"
+		"build" : "/home/pi/Documents/Lab_EXP/Rasp/build",
+		"source" : "/home/pi/Documents/Lab_EXP/Rasp"
 	},
 	"version" : 
 	{
 		"major" : 2,
-		"minor" : 6
+		"minor" : 0
 	}
 }
