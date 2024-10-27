@@ -72,6 +72,7 @@ namespace Raspberry
 
     inline void motorInit()
     {
+        wiringPiSetup();
         pinMode (M1_A, OUTPUT);
         pinMode (M1_B, OUTPUT);
         pinMode (M2_A, OUTPUT);
@@ -87,31 +88,31 @@ namespace Raspberry
     {
         switch (comando) {
             case FRENTE:
-                digitalWrite(M1_A, HIGH);
-                digitalWrite(M1_B, LOW);
-                digitalWrite(M2_A, HIGH);
-                digitalWrite(M2_B, LOW);
-                break;
-            case ATRAS:
                 digitalWrite(M1_A, LOW);
                 digitalWrite(M1_B, HIGH);
                 digitalWrite(M2_A, LOW);
                 digitalWrite(M2_B, HIGH);
                 break;
+            case ATRAS:
+                digitalWrite(M1_A, HIGH);
+                digitalWrite(M1_B, LOW);
+                digitalWrite(M2_A, HIGH);
+                digitalWrite(M2_B, LOW);
+                break;
             case DIAGONAL_FRENTE_DIREITA:
                 digitalWrite(M1_A, LOW);
                 digitalWrite(M1_B, LOW);
                 digitalWrite(M2_A, LOW);
-                digitalWrite(M2_B, LOW);
+                digitalWrite(M2_B, HIGH);
                 break;
             case DIAGONAL_FRENTE_ESQUERDA:
                 digitalWrite(M1_A, LOW);
-                digitalWrite(M1_B, LOW);
+                digitalWrite(M1_B, HIGH);
                 digitalWrite(M2_A, LOW);
                 digitalWrite(M2_B, LOW);
                 break;
             case DIAGONAL_ATRAS_DIREITA:
-                digitalWrite(M1_A, LOW);
+                digitalWrite(M1_A, HIGH);
                 digitalWrite(M1_B, LOW);
                 digitalWrite(M2_A, LOW);
                 digitalWrite(M2_B, LOW);
@@ -119,20 +120,20 @@ namespace Raspberry
             case DIAGONAL_ATRAS_ESQUERDA:
                 digitalWrite(M1_A, LOW);
                 digitalWrite(M1_B, LOW);
-                digitalWrite(M2_A, LOW);
+                digitalWrite(M2_A, HIGH);
                 digitalWrite(M2_B, LOW);
                 break;
             case GIRA_ESQUERDA:
-                digitalWrite(M1_A, HIGH);
-                digitalWrite(M1_B, LOW);
-                digitalWrite(M2_A, LOW);
-                digitalWrite(M2_B, HIGH);
-                break;
-            case GIRA_DIREITA:
                 digitalWrite(M1_A, LOW);
                 digitalWrite(M1_B, HIGH);
                 digitalWrite(M2_A, HIGH);
                 digitalWrite(M2_B, LOW);
+                break;
+            case GIRA_DIREITA:
+                digitalWrite(M1_A, HIGH);
+                digitalWrite(M1_B, LOW);
+                digitalWrite(M2_A, LOW);
+                digitalWrite(M2_B, HIGH);
                 break;
             case NAO_FAZ_NADA:            
             case NAO_SELECIONADO:
