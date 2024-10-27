@@ -1,0 +1,26 @@
+[
+{
+  "directory": "/home/joobortolace/Documentos/Lab_EXP/Server/build",
+  "command": "/usr/bin/g++  -I/home/joobortolace/Documentos/Lab_EXP/lib -isystem /usr/local/include/opencv4 -Wall -Wextra -O3 -o CMakeFiles/Server.dir/main.cpp.o -c /home/joobortolace/Documentos/Lab_EXP/Server/main.cpp",
+  "file": "/home/joobortolace/Documentos/Lab_EXP/Server/main.cpp",
+  "output": "CMakeFiles/Server.dir/main.cpp.o"
+},
+{
+  "directory": "/home/joobortolace/Documentos/Lab_EXP/Server/build",
+  "command": "/usr/bin/g++  -I/home/joobortolace/Documentos/Lab_EXP/lib -isystem /usr/local/include/opencv4 -Wall -Wextra -O3 -o CMakeFiles/Server.dir/home/joobortolace/Documentos/Lab_EXP/lib/Server.cpp.o -c /home/joobortolace/Documentos/Lab_EXP/lib/Server.cpp",
+  "file": "/home/joobortolace/Documentos/Lab_EXP/lib/Server.cpp",
+  "output": "CMakeFiles/Server.dir/home/joobortolace/Documentos/Lab_EXP/lib/Server.cpp.o"
+},
+{
+  "directory": "/home/joobortolace/Documentos/Lab_EXP/Server/build",
+  "command": "/usr/bin/g++  -I/home/joobortolace/Documentos/Lab_EXP/lib -isystem /usr/local/include/opencv4 -Wall -Wextra -O3 -o CMakeFiles/Server.dir/home/joobortolace/Documentos/Lab_EXP/lib/Client.cpp.o -c /home/joobortolace/Documentos/Lab_EXP/lib/Client.cpp",
+  "file": "/home/joobortolace/Documentos/Lab_EXP/lib/Client.cpp",
+  "output": "CMakeFiles/Server.dir/home/joobortolace/Documentos/Lab_EXP/lib/Client.cpp.o"
+},
+{
+  "directory": "/home/joobortolace/Documentos/Lab_EXP/Server/build",
+  "command": "/usr/bin/g++  -I/home/joobortolace/Documentos/Lab_EXP/lib -isystem /usr/local/include/opencv4 -Wall -Wextra -O3 -o CMakeFiles/Server.dir/home/joobortolace/Documentos/Lab_EXP/lib/Device.cpp.o -c /home/joobortolace/Documentos/Lab_EXP/lib/Device.cpp",
+  "file": "/home/joobortolace/Documentos/Lab_EXP/lib/Device.cpp",
+  "output": "CMakeFiles/Server.dir/home/joobortolace/Documentos/Lab_EXP/lib/Device.cpp.o"
+}
+]
