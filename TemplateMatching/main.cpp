@@ -6,8 +6,8 @@
 #include "Raspberry.hpp"
 
 #define NUM_ESCALAS     16
-#define ESCALA_MIN      0.3f 
-#define ESCALA_MAX      0.02f
+#define ESCALA_MAX      0.3f 
+#define ESCALA_MIN      0.02f
 #define THRESHOLD       0.6
 #define TEMPLATE_SIZE   401
 
@@ -34,7 +34,8 @@ int main(int argc, char *argv[])
         
         // Para conseguir detectar o modelo para diferentes distâncias é nescessário obtê-lo em diferêntes escalas
         Mat_<Raspberry::Flt> modelosPreProcessados[NUM_ESCALAS];
-        Raspberry::getModeloPreProcessados(modelo, modelosPreProcessados, NUM_ESCALAS, ESCALA_MIN, ESCALA_MAX);
+        const float escala = ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS);
+        Raspberry::getModeloPreProcessados(modelo, modelosPreProcessados, NUM_ESCALAS, escala, ESCALA_MIN);
         
         // Para armazenar as imagens recebidas
         Mat_<Raspberry::Cor> frameBuf;
@@ -59,7 +60,7 @@ int main(int argc, char *argv[])
 
                 // Caso os pontos encontrados estejam acima do limiar e próximos entre si, salva a média das posições     
                 if (correlacaoPonto.correlacao > THRESHOLD) {
-                    auto fator = ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS)*n + ESCALA_MIN;
+                    auto fator = escala*n + ESCALA_MIN;
 
                     #pragma omp critical
                     findPos.push_back(Raspberry::FindPos {fator, correlacaoPonto});

@@ -8,11 +8,10 @@
 #include "Client.hpp"
 
 /* -------- Defines -------- */
-#define NUM_ESCALAS     16
-#define ESCALA_MIN      0.3f 
-#define ESCALA_MAX      0.02f
+#define NUM_ESCALAS     20
+#define ESCALA_MAX      0.4f 
+#define ESCALA_MIN      0.02f
 #define THRESHOLD       0.6
-#define TEMPLATE_SIZE   401
 
 /* -------- Variáveis Globais -------- */
 static Raspberry::Teclado comando = Raspberry::Teclado::NAO_SELECIONADO;
@@ -50,11 +49,12 @@ int main(int argc, char *argv[])
     // Obtem o modelo a ser buscado
     Mat_<Raspberry::Flt> modelo;
     Raspberry::Cor2Flt(imread(argv[3], 1), modelo);
+    const int templateSize = modelo.cols;
 
-     // Para conseguir detectar o modelo para diferentes distâncias é nescessário obtê-lo em diferêntes escalas
+    // Para conseguir detectar o modelo para diferentes distâncias é nescessário obtê-lo em diferêntes escalas
     Mat_<Raspberry::Flt> modelosPreProcessados[NUM_ESCALAS];
     const float escala = ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS);
-    Raspberry::getModeloPreProcessados(modelo, modelosPreProcessados, NUM_ESCALAS, escala, ESCALA_MAX);
+    Raspberry::getModeloPreProcessados(modelo, modelosPreProcessados, NUM_ESCALAS, escala, ESCALA_MIN);
 
     // Para armazenar as imagens recebidas
     Mat_<Raspberry::Cor> frameBuf;
@@ -65,8 +65,10 @@ int main(int argc, char *argv[])
         Client client(argv[1], argv[2]);
         client.waitConnection();
 
-        // Recebe os quadros e envia o comando
         while (true) {
+            auto t1 = Raspberry::timeSinceEpoch();
+            
+            // Recebe os quadros e envia o comando
             client.receiveImageCompactada(frameBuf);
             client.sendBytes(sizeof(Raspberry::Teclado), (Raspberry::Byte *) &comando);  
 
@@ -82,7 +84,7 @@ int main(int argc, char *argv[])
                 Mat_<Raspberry::Flt> correlacao = Raspberry::matchTemplateSame(frameBufFlt, modelosPreProcessados[n], TM_CCOEFF_NORMED);
 
                 Raspberry::CorrelacaoPonto correlacaoPonto;
-                minMaxLoc(correlacao, 0, &correlacaoPonto.correlacao, 0, &correlacaoPonto.posicao);
+                minMaxLoc(correlacao, NULL, &correlacaoPonto.correlacao, NULL, &correlacaoPonto.posicao);
 
                 // Captura somente os pontos encontrados acima do limiar   
                 if (correlacaoPonto.correlacao > THRESHOLD) {
@@ -95,8 +97,9 @@ int main(int argc, char *argv[])
 
             // Busca a maior correlação encontrada
             Raspberry::FindPos maxCorr;
+            maxCorr.escala = -1.0;
             maxCorr.ponto.correlacao = 0.0;
-            
+
             for (auto find : findPos) {
                 if (find.ponto.correlacao > maxCorr.ponto.correlacao) {
                     maxCorr = find;
@@ -104,8 +107,10 @@ int main(int argc, char *argv[])
             }
 
             // Desenha um retangulo na posição de maior correlação encontrada
-            Raspberry::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*TEMPLATE_SIZE);
-
+            if (maxCorr.escala > 0) {
+                Raspberry::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*templateSize);
+            }
+            
             // Coloca o teclado 
             hconcat(teclado, frameBuf, frameBuf);  
 
@@ -114,6 +119,9 @@ int main(int argc, char *argv[])
             if ((waitKey(1) & 0xFF)  == 27) { // Esc
                 break;
             }
+
+            auto t2 = Raspberry::timeSinceEpoch();
+            std::cout << "\r" << 1.0/(t2 - t1) << " FPS" << std::flush;
         }
     }
     catch (const std::exception& e) {
