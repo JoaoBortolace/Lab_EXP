@@ -3,6 +3,7 @@
 #define RASPBERRY_HPP
 
 #include <opencv2/opencv.hpp>
+#include <omp.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -27,9 +28,12 @@ using namespace cv;
 
 namespace Raspberry
 {
-    typedef uint8_t Byte;
-    typedef uint8_t Gry;
-    typedef Vec3b Cor;
+    using Byte = uint8_t;
+    using Gry  = uint8_t;
+    using Cor  = Vec3b;
+    using Flt  = float;
+
+    const double epsilon = FLT_EPSILON;
 
     typedef enum
     {
@@ -44,6 +48,18 @@ namespace Raspberry
         NAO_FAZ_NADA,
         NAO_SELECIONADO,
     } Teclado;
+
+    typedef struct
+    {
+        double correlacao;
+        Point posicao;
+    } CorrelacaoPonto;
+
+    typedef struct
+    {
+        float escala;
+        CorrelacaoPonto ponto;
+    } FindPos;
 
     /*
      * Retorna a quantidade de segundos desde a última vez que esta foi chamada
@@ -306,6 +322,120 @@ namespace Raspberry
             default:
                 comando = Teclado::NAO_SELECIONADO;
                 break;
+        }
+    }
+
+    /*
+     * Realiza a busca do modelo na imagem, retorna uma imagem de correlação de mesma dimensão.
+     */
+    inline Mat_<Flt> matchTemplateSame(Mat_<Flt> imagem, Mat_<Flt> modelo, int metodo, Flt backgroundColor = 0.0f)
+    {
+        Mat_<Flt> resultado{imagem.size(), backgroundColor};
+        Rect rect{(modelo.cols-1)/2, (modelo.rows-1)/2, imagem.cols - modelo.cols + 1, imagem.rows - modelo.rows + 1};
+        Mat_<Flt> roi{resultado, rect};
+        matchTemplate(imagem, modelo, roi, metodo);
+        return resultado;
+    }
+
+    /*
+     * Calcula a distância euclidiana de dois pontos
+     */
+    inline double distanciaEuclidiana(Point a, Point b)
+    {
+        double x = a.x - b.x;
+        double y = a.y - b.y;
+        return sqrtf64(x*x + y*y);
+    }
+
+    /*
+     * Retorna o ponto médio
+     */
+    inline Point pontoMedio(Point a, Point b)
+    {
+        int x = 0.5*(a.x + b.x);
+        int y = 0.5*(a.y + b.y);
+        return Point{x, y};
+    }
+
+    /*
+     * Torna a somatoria absoluta da imagem dar dois
+     */
+    inline Mat_<Flt> modulo2(Mat_<Flt> imagem) 
+    {
+        Mat_<Flt> clone = imagem.clone();
+        
+        double soma=0.0;
+        for (auto it = clone.begin(); it != clone.end(); it++) {
+            soma += abs(*it);
+        }
+
+        if (soma < epsilon) {
+            throw std::runtime_error("Erro: Divisao por zero");
+        }
+
+        soma = 2.0/(soma);
+
+        for (auto it = clone.begin(); it != clone.end(); it++) {
+            (*it) *= soma;
+        }
+              
+        return clone;
+    }
+
+    /*
+     * Elimina nivel DC (subtrai media)
+     */
+    inline Mat_<Flt> dcReject(Mat_<Flt> imagem) 
+    { 
+        return imagem - mean(imagem)[0];;
+    }
+
+    /*
+     * Elimina nivel DC (subtrai media) com dontcare
+     */
+    inline Mat_<Flt> dcReject(Mat_<Flt> imagem, Flt dontcare) 
+    {
+        Mat_<uchar> naodontcare = (imagem != dontcare); 
+        Scalar media = mean(imagem, naodontcare);
+        subtract(imagem, media[0], imagem, naodontcare);
+        Mat_<uchar> simdontcare = (imagem == dontcare); 
+        subtract(imagem, dontcare, imagem, simdontcare);
+        return imagem;
+    }
+    
+    /*
+     * Converte uma imagem de Cor (Vec3b) para Float em escala de cinza
+     */
+    inline void Cor2Flt(Mat_<Cor> entrada, Mat_<Flt>& saida) 
+    {
+        Mat_<Vec3f> temp; 
+        entrada.convertTo(temp, CV_32F, 1.0/255.0, 0.0);
+        cvtColor(temp, saida, COLOR_BGR2GRAY);
+    }
+
+    /*
+     * Adiciona a imagem um retangulo não preenchido centralizado no ponto passado
+     */
+   template <typename T>
+   inline void ploteRetangulo(Mat_<T>& image, Point center, float size, Raspberry::Cor color = Paleta::red, float espessura = 1.5)
+   {
+        Point a {max(center.x - (int) (size*0.5), 0), max(center.y - (int) (size*0.5), 0)};
+        Point b {min(center.x + (int) (size*0.5), CAMERA_FRAME_WIDTH), min(center.y + (int) (size*0.5), CAMERA_FRAME_HEIGHT)};    
+        rectangle(image, a, b, color, espessura);
+   }
+
+   inline void getModeloPreProcessados(Mat_<Flt>& modelo, Mat_<Flt> modelosPreProcessados[], uint8_t numEscalas, float escalaMin, float escalaMax)
+   {
+        float escala = (escalaMax - escalaMin) / numEscalas;
+        #pragma omp parallel for
+        for (auto i = 0; i < numEscalas; i++) {
+            auto fator = escala*i + escalaMin;
+            Mat_<Raspberry::Flt> temp;
+
+            resize(modelo, temp, Size(), fator, fator, INTER_NEAREST);
+                    
+            // Para poder usar o metodo de Correlação cruzada é nescessário pre-processar o modelo
+            modelosPreProcessados[i] = Raspberry::modulo2(Raspberry::dcReject(temp, 1.0));
         }
     }
 }
