@@ -31,6 +31,8 @@ int main(int argc, char *argv[])
 
         camera.set(CAP_PROP_FRAME_WIDTH, CAMERA_FRAME_WIDTH);
         camera.set(CAP_PROP_FRAME_HEIGHT, CAMERA_FRAME_HEIGHT);
+        
+        // Para armazenar as imagens que serão transmitidas
         Mat_<Raspberry::Cor> frameBuf;
 
         // Transmite os quadros

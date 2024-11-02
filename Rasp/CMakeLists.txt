@@ -15,13 +15,13 @@ get_filename_component(PARENT_DIR "${CURRENT_DIR}" DIRECTORY)
 set(LIB_DIR ${PARENT_DIR}/lib)
 
 # Configurações de compilação
-if (NOT CMAKE_BUID_TYPE)
+if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE  Release)
 endif()
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKE_CXX_FLAGS_RELEASE "-Os")
 
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)

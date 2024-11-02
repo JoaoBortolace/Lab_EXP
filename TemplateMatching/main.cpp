@@ -4,12 +4,11 @@
 
 /* -------- Includes -------- */
 #include "Raspberry.hpp"
-#include <queue>
 
-#define NUM_ESCALAS 24
-#define ESCALA_MIN  0.3f 
-#define ESCALA_MAX  0.02f
-#define THRESHOLD   0.6
+#define NUM_ESCALAS     16
+#define ESCALA_MIN      0.3f 
+#define ESCALA_MAX      0.02f
+#define THRESHOLD       0.6
 #define TEMPLATE_SIZE   401
 
 /* -------- Main -------- */
@@ -44,7 +43,7 @@ int main(int argc, char *argv[])
         while (true) {
             auto t1 = Raspberry::timeSinceEpoch();
 
-            camera >> frameBuf;
+            camera.read(frameBuf);
             Raspberry::Cor2Flt(frameBuf, frameBufFlt);
 
             // Realiza o template matching pelas diferentes escalas

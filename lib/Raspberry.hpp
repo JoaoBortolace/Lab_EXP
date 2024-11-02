@@ -416,17 +416,16 @@ namespace Raspberry
     /*
      * Adiciona a imagem um retangulo não preenchido centralizado no ponto passado
      */
-   template <typename T>
-   inline void ploteRetangulo(Mat_<T>& image, Point center, float size, Raspberry::Cor color = Paleta::red, float espessura = 1.5)
-   {
+    template <typename T>
+    inline void ploteRetangulo(Mat_<T>& image, Point center, float size, Raspberry::Cor color = Paleta::red, float espessura = 1.5)
+    {
         Point a {max(center.x - (int) (size*0.5), 0), max(center.y - (int) (size*0.5), 0)};
         Point b {min(center.x + (int) (size*0.5), CAMERA_FRAME_WIDTH), min(center.y + (int) (size*0.5), CAMERA_FRAME_HEIGHT)};    
         rectangle(image, a, b, color, espessura);
-   }
+    }
 
-   inline void getModeloPreProcessados(Mat_<Flt>& modelo, Mat_<Flt> modelosPreProcessados[], uint8_t numEscalas, float escalaMin, float escalaMax)
+   inline void getModeloPreProcessados(Mat_<Flt>& modelo, Mat_<Flt> modelosPreProcessados[], uint8_t numEscalas, float escala, float escalaMin=0.0f)
    {
-        float escala = (escalaMax - escalaMin) / numEscalas;
         #pragma omp parallel for
         for (auto i = 0; i < numEscalas; i++) {
             auto fator = escala*i + escalaMin;
@@ -441,4 +440,3 @@ namespace Raspberry
 }
 
 #endif
-
