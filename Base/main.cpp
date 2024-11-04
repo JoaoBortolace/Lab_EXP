@@ -14,6 +14,7 @@
 #define THRESHOLD       0.6
 
 /* -------- Variáveis Globais -------- */
+static Raspberry::Controle controle = Raspberry::Controle::MANUAL;
 static Raspberry::Teclado comando = Raspberry::Teclado::NAO_SELECIONADO;
 static Mat_<Raspberry::Cor> teclado;
 
@@ -27,6 +28,11 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
         uint32_t col = x / BUTTON_WIDTH;
         uint32_t row = y / BUTTON_HEIGHT;
         Raspberry::getComando(col, row, teclado, comando);
+
+        // Alterna entre o controle manual ou automático
+        if (comando == Raspberry::Teclado::NAO_FAZ_NADA) {
+            controle = controle == Raspberry::Controle::AUTOMATO ? Raspberry::Controle::MANUAL : Raspberry::Controle::AUTOMATO;
+        }
     }
     else if (event == EVENT_LBUTTONUP) {
         Raspberry::limpaTeclado(teclado, comando);
@@ -70,47 +76,55 @@ int main(int argc, char *argv[])
             
             // Recebe os quadros e envia o comando
             client.receiveImageCompactada(frameBuf);
-            client.sendBytes(sizeof(Raspberry::Teclado), (Raspberry::Byte *) &comando);  
 
-            // Converte a imagem recebida para float em escala de cinza
-            Raspberry::Cor2Flt(frameBuf, frameBufFlt);
+            if (controle == Raspberry::Controle::MANUAL) {
+                client.sendBytes(sizeof(Raspberry::Teclado), (Raspberry::Byte *) &comando);  
+            }
+            else {
+                // Converte a imagem recebida para float em escala de cinza
+                Raspberry::Cor2Flt(frameBuf, frameBufFlt);
 
-            // Realiza o template matching pelas diferentes escalas
-            std::vector<Raspberry::FindPos> findPos(NUM_ESCALAS);
-            
-            #pragma omp parallel for
-            for (auto n = 0; n < NUM_ESCALAS; n++) {
-                // Template matching usando CCOEFF_NORMED
-                Mat_<Raspberry::Flt> correlacao = Raspberry::matchTemplateSame(frameBufFlt, modelosPreProcessados[n], TM_CCOEFF_NORMED);
+                // Realiza o template matching pelas diferentes escalas
+                std::vector<Raspberry::FindPos> findPos(NUM_ESCALAS);
+                
+                #pragma omp parallel for
+                for (auto n = 0; n < NUM_ESCALAS; n++) {
+                    // Template matching usando CCOEFF_NORMED
+                    Mat_<Raspberry::Flt> correlacao = Raspberry::matchTemplateSame(frameBufFlt, modelosPreProcessados[n], TM_CCOEFF_NORMED);
 
-                Raspberry::CorrelacaoPonto correlacaoPonto;
-                minMaxLoc(correlacao, NULL, &correlacaoPonto.correlacao, NULL, &correlacaoPonto.posicao);
+                    Raspberry::CorrelacaoPonto correlacaoPonto;
+                    minMaxLoc(correlacao, NULL, &correlacaoPonto.correlacao, NULL, &correlacaoPonto.posicao);
 
-                // Captura somente os pontos encontrados acima do limiar   
-                if (correlacaoPonto.correlacao > THRESHOLD) {
-                    auto fator = escala*n + ESCALA_MIN;
+                    // Captura somente os pontos encontrados acima do limiar   
+                    if (correlacaoPonto.correlacao > THRESHOLD) {
+                        auto fator = escala*n + ESCALA_MIN;
 
-                    #pragma omp critical
-                    findPos.push_back(Raspberry::FindPos {fator, correlacaoPonto});
+                        #pragma omp critical
+                        findPos.push_back(Raspberry::FindPos {fator, correlacaoPonto});
+                    }
+                }
+
+                // Busca a maior correlação encontrada
+                Raspberry::FindPos maxCorr;
+                maxCorr.escala = -1.0;
+                maxCorr.ponto.correlacao = 0.0;
+
+                for (auto find : findPos) {
+                    if (find.ponto.correlacao > maxCorr.ponto.correlacao) {
+                        maxCorr = find;
+                    }
+                }
+
+                
+
+
+
+                // Desenha um retangulo na posição de maior correlação encontrada
+                if (maxCorr.escala > 0) {
+                    Raspberry::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*templateSize);
                 }
             }
 
-            // Busca a maior correlação encontrada
-            Raspberry::FindPos maxCorr;
-            maxCorr.escala = -1.0;
-            maxCorr.ponto.correlacao = 0.0;
-
-            for (auto find : findPos) {
-                if (find.ponto.correlacao > maxCorr.ponto.correlacao) {
-                    maxCorr = find;
-                }
-            }
-
-            // Desenha um retangulo na posição de maior correlação encontrada
-            if (maxCorr.escala > 0) {
-                Raspberry::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*templateSize);
-            }
-            
             // Coloca o teclado 
             hconcat(teclado, frameBuf, frameBuf);  
 

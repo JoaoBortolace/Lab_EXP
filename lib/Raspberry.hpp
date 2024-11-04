@@ -49,6 +49,12 @@ namespace Raspberry
         NAO_SELECIONADO,
     } Teclado;
 
+    typedef enum
+    {
+        AUTOMATO = 0,
+        MANUAL,
+    } Controle;
+
     typedef struct
     {
         double correlacao;
