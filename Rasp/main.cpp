@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
             // Modos de operação
             if (controle == Raspberry::Controle::MANUAL) {
                 // Passa o comando para o motor
-                Raspberry::motorSetDir(comando);
+                Raspberry::motorSetDirPwm(comando, 100);
             }
             else { // Modo Autômato
                 int velocidades[4];

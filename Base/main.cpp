@@ -15,7 +15,7 @@
 
 /* -------- Variáveis Globais -------- */
 static Raspberry::Controle controle = Raspberry::Controle::MANUAL;
-static Raspberry::Teclado comando = Raspberry::Teclado::NAO_SELECIONADO;
+static Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
 static Mat_<Raspberry::Cor> teclado;
 
 /* -------- Callbacks -------- */
@@ -30,13 +30,13 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
         Raspberry::getComando(col, row, teclado, comando);
 
         // Alterna entre o controle manual ou automático
-        if (comando == Raspberry::Teclado::NAO_FAZ_NADA) {
-            controle = controle == Raspberry::Controle::AUTOMATO ? Raspberry::Controle::MANUAL : Raspberry::Controle::AUTOMATO;
+        if (comando == Raspberry::Comando::ALTERNA_MODO) {
+            controle = static_cast<Raspberry::Controle>(~controle & 1);
         }
     }
     else if (event == EVENT_LBUTTONUP) {
         Raspberry::limpaTeclado(teclado, comando);
-        comando = Raspberry::Teclado::NAO_SELECIONADO;
+        comando = Raspberry::Comando::NAO_SELECIONADO;
     }
 }
 
@@ -76,11 +76,10 @@ int main(int argc, char *argv[])
             
             // Recebe os quadros e envia o comando
             client.receiveImageCompactada(frameBuf);
+            client.sendBytes(sizeof(Raspberry::Comando), (Raspberry::Byte *) &comando);  
 
-            if (controle == Raspberry::Controle::MANUAL) {
-                client.sendBytes(sizeof(Raspberry::Teclado), (Raspberry::Byte *) &comando);  
-            }
-            else {
+            // Controle Autômato
+            if (controle == Raspberry::Controle::AUTOMATO) {
                 // Converte a imagem recebida para float em escala de cinza
                 Raspberry::Cor2Flt(frameBuf, frameBufFlt);
 
@@ -115,14 +114,16 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                
-
-
+                int velocidades[4] = {0, 100, 0, 100};
 
                 // Desenha um retangulo na posição de maior correlação encontrada
                 if (maxCorr.escala > 0) {
+                    float pos_normalizada = (maxCorr.ponto.posicao.x - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/10); 
+
                     Raspberry::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*templateSize);
                 }
+                
+                client.sendBytes(sizeof(velocidades), (Raspberry::Byte*) velocidades);
             }
 
             // Coloca o teclado 

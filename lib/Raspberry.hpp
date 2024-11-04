@@ -168,6 +168,71 @@ namespace Raspberry
     }
 
     /*
+     * Seta a direção de rotação dos motores, conforme o comando passado
+     */
+    inline void motorSetDirPwm(Comando comando, int velocidade) 
+    {
+        switch (comando) {
+            case FRENTE:
+                softPwmWrite(M1_A, 0);
+                softPwmWrite(M1_B, velocidade);
+                softPwmWrite(M2_A, 0);
+                softPwmWrite(M2_B, velocidade);
+                break;
+            case ATRAS:
+                softPwmWrite(M1_A, velocidade);
+                softPwmWrite(M1_B, 0);
+                softPwmWrite(M2_A, velocidade);
+                softPwmWrite(M2_B, 0);
+                break;
+            case DIAGONAL_FRENTE_DIREITA:
+                softPwmWrite(M1_A, 0);
+                softPwmWrite(M1_B, 0);
+                softPwmWrite(M2_A, 0);
+                softPwmWrite(M2_B, velocidade);
+                break;
+            case DIAGONAL_FRENTE_ESQUERDA:
+                softPwmWrite(M1_A, 0);
+                softPwmWrite(M1_B, velocidade);
+                softPwmWrite(M2_A, 0);
+                softPwmWrite(M2_B, 0);
+                break;
+            case DIAGONAL_ATRAS_DIREITA:
+                softPwmWrite(M1_A, 0);
+                softPwmWrite(M1_B, 0);
+                softPwmWrite(M2_A, velocidade);
+                softPwmWrite(M2_B, 0);
+                break;
+            case DIAGONAL_ATRAS_ESQUERDA:
+                softPwmWrite(M1_A, velocidade);
+                softPwmWrite(M1_B, 0);
+                softPwmWrite(M2_A, 0);
+                softPwmWrite(M2_B, 0);
+                break;
+            case GIRA_ESQUERDA:
+                softPwmWrite(M1_A, 0);
+                softPwmWrite(M1_B, velocidade);
+                softPwmWrite(M2_A, velocidade);
+                softPwmWrite(M2_B, 0);
+                break;
+            case GIRA_DIREITA:
+                softPwmWrite(M1_A, velocidade);
+                softPwmWrite(M1_B, 0);
+                softPwmWrite(M2_A, 0);
+                softPwmWrite(M2_B, velocidade);
+                break;
+            case ALTERNA_MODO:            
+            case NAO_SELECIONADO:
+            default:
+                softPwmWrite(M1_A, 0);
+                softPwmWrite(M1_B, 0);
+                softPwmWrite(M2_A, 0);
+                softPwmWrite(M2_B, 0);
+                break;
+        }
+    }
+
+    /*
      * Inicializa os PWMs do controle da ponte H
      */
     inline void motorInitPwm()
@@ -203,6 +268,10 @@ namespace Raspberry
      */
     inline void motorStop() 
     {        
+        softPwmWrite(M1_A, 0);
+        softPwmWrite(M1_B, 0);
+        softPwmWrite(M2_A, 0);
+        softPwmWrite(M2_B, 0);
         softPwmStop(M1_A);
         softPwmStop(M1_B);
         softPwmStop(M2_A);
