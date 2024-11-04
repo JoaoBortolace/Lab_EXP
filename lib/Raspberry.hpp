@@ -45,9 +45,9 @@ namespace Raspberry
         DIAGONAL_ATRAS_ESQUERDA,
         GIRA_ESQUERDA,
         GIRA_DIREITA,
-        NAO_FAZ_NADA,
+        ALTERNA_MODO,
         NAO_SELECIONADO,
-    } Teclado;
+    } Comando;
 
     typedef enum
     {
@@ -78,7 +78,8 @@ namespace Raspberry
 
     #ifdef RASP_PINS
     #include <wiringPi.h>
-
+    #include <softPwm.h>
+    
     #define M1_A    0
     #define M1_B    1
     #define M2_A    2
@@ -104,7 +105,7 @@ namespace Raspberry
     /*
      * Seta a direção de rotação dos motores, conforme o comando passado
      */
-    inline void motorSetDir(Teclado comando) 
+    inline void motorSetDir(Comando comando) 
     {
         switch (comando) {
             case FRENTE:
@@ -155,7 +156,7 @@ namespace Raspberry
                 digitalWrite(M2_A, LOW);
                 digitalWrite(M2_B, HIGH);
                 break;
-            case NAO_FAZ_NADA:            
+            case ALTERNA_MODO:            
             case NAO_SELECIONADO:
             default:
                 digitalWrite(M1_A, LOW);
@@ -164,6 +165,48 @@ namespace Raspberry
                 digitalWrite(M2_B, LOW);
                 break;
         }
+    }
+
+    /*
+     * Inicializa os PWMs do controle da ponte H
+     */
+    inline void motorInitPwm()
+    {
+        wiringPiSetup();
+        
+        if (softPwmCreate(M1_A, 0, 100))
+            throw std::runtime_error("Erro ao criar o PWM do M1_A");
+
+        if (softPwmCreate(M1_B, 0, 100))
+            throw std::runtime_error("Erro ao criar o PWM do M1_B");
+
+        if (softPwmCreate(M2_A, 0, 100))
+            throw std::runtime_error("Erro ao criar o PWM do M2_A");
+
+        if (softPwmCreate(M2_B, 0, 100))
+            throw std::runtime_error("Erro ao criar o PWM do M2_B");
+    }
+
+    /*
+     * Seta a velocidae de rotação dos motores, conforme o comando passado
+     */
+    inline void motorSetVel(int velocidades[]) 
+    {        
+        softPwmWrite(M1_A, velocidades[0]);
+        softPwmWrite(M1_B, velocidades[1]);
+        softPwmWrite(M2_A, velocidades[2]);
+        softPwmWrite(M2_B, velocidades[3]);
+    }
+
+    /*
+     * Para os motores
+     */
+    inline void motorStop() 
+    {        
+        softPwmStop(M1_A);
+        softPwmStop(M1_B);
+        softPwmStop(M2_A);
+        softPwmStop(M2_B);
     }
     #endif
 
@@ -175,7 +218,8 @@ namespace Raspberry
     inline void erro(string s1="") 
     {
         #ifdef RASP_PINS
-        motorSetDir(Teclado::NAO_FAZ_NADA);
+        motorSetDir(Comando::NAO_SELECIONADO);
+        motorStop();
         #endif
         
         cerr << s1 << endl;
@@ -234,7 +278,7 @@ namespace Raspberry
     /*
      *  Retorna para a cor padrão da seta do comando correspondente 
      */
-    inline void limpaTeclado(Mat_<Cor>& teclado, Teclado comando) {
+    inline void limpaTeclado(Mat_<Cor>& teclado, Comando comando) {
         switch (comando)
         {
             case FRENTE:
@@ -261,7 +305,7 @@ namespace Raspberry
             case GIRA_DIREITA:
                 arrowedLine(teclado, Point(180, 120), Point(220, 120), Paleta::blue03, 3);
                 break;
-            case NAO_FAZ_NADA:
+            case ALTERNA_MODO:
                 rectangle(teclado, Point(115, 115), Point(125, 125), Paleta::blue03, -1);
                 break;
             case NAO_SELECIONADO:
@@ -272,7 +316,7 @@ namespace Raspberry
     /*
      * Obtém-se qual é o comando equivalente a posição do clique, se for válido, também altera a cor da seta correspondete para vermelho 
      */
-    inline void getComando(uint32_t col, uint32_t row, Mat_<Cor>& teclado, Teclado& comando) 
+    inline void getComando(uint32_t col, uint32_t row, Mat_<Cor>& teclado, Comando& comando) 
     {
         // Primeiro seleciona qual coluna foi escolhida
         switch (col) {
@@ -280,15 +324,15 @@ namespace Raspberry
                 // Depois seleciona qual linha foi escolhida
                 switch (row) {
                     case 0:
-                        comando = Teclado::DIAGONAL_FRENTE_ESQUERDA;
+                        comando = Comando::DIAGONAL_FRENTE_ESQUERDA;
                         arrowedLine(teclado, Point(60, 60), Point(20, 20), Paleta::red, 2.5);
                         break;
                     case 1:
-                        comando = Teclado::GIRA_ESQUERDA;
+                        comando = Comando::GIRA_ESQUERDA;
                         arrowedLine(teclado, Point(60, 120), Point(20, 120), Paleta::red, 3);
                         break;
                     case 2:
-                        comando = Teclado::DIAGONAL_ATRAS_ESQUERDA;
+                        comando = Comando::DIAGONAL_ATRAS_ESQUERDA;
                         arrowedLine(teclado, Point(60, 180), Point(20, 220), Paleta::red, 2.5);    
                         break;
                 }
@@ -296,15 +340,15 @@ namespace Raspberry
             case 1:
                 switch (row) {
                     case 0:
-                        comando = Teclado::FRENTE;
+                        comando = Comando::FRENTE;
                         arrowedLine(teclado, Point(120, 60), Point(120, 20), Paleta::red, 3);
                         break;
                     case 1:
-                        comando = Teclado::NAO_FAZ_NADA;
+                        comando = Comando::ALTERNA_MODO;
                         rectangle(teclado, Point(115, 115), Point(125, 125), Paleta::grey, -1);
                         break;
                     case 2:
-                        comando = Teclado::ATRAS;
+                        comando = Comando::ATRAS;
                         arrowedLine(teclado, Point(120, 180), Point(120, 220), Paleta::red, 3);
                         break;
                 }
@@ -312,21 +356,21 @@ namespace Raspberry
             case 2:
                 switch (row) {
                     case 0:
-                        comando = Teclado::DIAGONAL_FRENTE_DIREITA;
+                        comando = Comando::DIAGONAL_FRENTE_DIREITA;
                         arrowedLine(teclado, Point(180, 60), Point(220, 20), Paleta::red, 2.5);
                         break;
                     case 1:
-                        comando = Teclado::GIRA_DIREITA;
+                        comando = Comando::GIRA_DIREITA;
                         arrowedLine(teclado, Point(180, 120), Point(220, 120), Paleta::red, 3);
                         break;
                     case 2:
-                        comando = Teclado::DIAGONAL_ATRAS_DIREITA;
+                        comando = Comando::DIAGONAL_ATRAS_DIREITA;
                         arrowedLine(teclado, Point(180, 180), Point(220, 220), Paleta::red, 2.5);
                         break;
                 }
                 break;
             default:
-                comando = Teclado::NAO_SELECIONADO;
+                comando = Comando::NAO_SELECIONADO;
                 break;
         }
     }

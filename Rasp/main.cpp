@@ -20,7 +20,9 @@ int main(int argc, char *argv[])
         server.waitConnection();
 
         // Controle dos Motores
-        Raspberry::Teclado comando = Raspberry::Teclado::NAO_SELECIONADO;
+        Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
+        Raspberry::Controle controle = Raspberry::Controle::MANUAL;
+
         Raspberry::motorInit();
 
         // Inicia a camera e configura a camera
@@ -41,10 +43,23 @@ int main(int argc, char *argv[])
             server.sendImageCompactada(frameBuf);
 
             // Recebe o comando
-            server.receiveBytes(sizeof(Raspberry::Teclado),(Raspberry::Byte *) &comando);
+            server.receiveBytes(sizeof(Raspberry::Comando), (Raspberry::Byte *) &comando);
 
-            // Passa o comando para o motor
-            Raspberry::motorSetDir(comando);
+             // Alterna entre o controle manual ou automático
+            if (comando == Raspberry::Comando::ALTERNA_MODO) {
+                controle = static_cast<Raspberry::Controle>(~controle & 1);
+            }
+
+            // Modos de operação
+            if (controle == Raspberry::Controle::MANUAL) {
+                // Passa o comando para o motor
+                Raspberry::motorSetDir(comando);
+            }
+            else { // Modo Autômato
+                int velocidades[4];
+                server.receiveBytes(sizeof(velocidades), (Raspberry::Byte *) velocidades);
+                Raspberry::motorSetVel(velocidades);
+            }
         }
     }
     catch (const std::exception& e) {
@@ -52,7 +67,7 @@ int main(int argc, char *argv[])
     }
 
     // Desliga os motores
-    Raspberry::motorSetDir(Raspberry::Teclado::NAO_FAZ_NADA);
+    Raspberry::motorStop();
     
     return 0;
 }
