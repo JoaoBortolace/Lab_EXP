@@ -10,8 +10,8 @@
 /* -------- Defines -------- */
 #define NUM_ESCALAS     20
 #define ESCALA_MAX      0.4f 
-#define ESCALA_MIN      0.02f
-#define THRESHOLD       0.6
+#define ESCALA_MIN      0.03f
+#define THRESHOLD       0.65f
 
 /* -------- Variáveis Globais -------- */
 static Raspberry::Controle controle = Raspberry::Controle::MANUAL;
@@ -28,11 +28,6 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
         uint32_t col = x / BUTTON_WIDTH;
         uint32_t row = y / BUTTON_HEIGHT;
         Raspberry::getComando(col, row, teclado, comando);
-
-        // Alterna entre o controle manual ou automático
-        if (comando == Raspberry::Comando::ALTERNA_MODO) {
-            controle = static_cast<Raspberry::Controle>(~controle & 1);
-        }
     }
     else if (event == EVENT_LBUTTONUP) {
         Raspberry::limpaTeclado(teclado, comando);
@@ -78,6 +73,11 @@ int main(int argc, char *argv[])
             client.receiveImageCompactada(frameBuf);
             client.sendBytes(sizeof(Raspberry::Comando), (Raspberry::Byte *) &comando);  
 
+            // Alterna entre o controle manual ou automático
+            if (comando == Raspberry::Comando::ALTERNA_MODO) {
+                controle = static_cast<Raspberry::Controle>(~controle & 1);
+            }
+
             // Controle Autômato
             if (controle == Raspberry::Controle::AUTOMATO) {
                 // Converte a imagem recebida para float em escala de cinza
@@ -114,17 +114,30 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                int velocidades[4] = {0, 100, 0, 100};
+                int velocidades[4] = {0};
 
                 // Desenha um retangulo na posição de maior correlação encontrada
                 if (maxCorr.escala > 0) {
-                    float pos_normalizada = (maxCorr.ponto.posicao.x - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/10); 
+                    velocidades[1] = velocidades[3] = 100;
+
+                    int pos_normalizada = (int) ((maxCorr.ponto.posicao.x - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/100.0)); 
+
+                    if (pos_normalizada > 0) {
+                        velocidades[1] -= pos_normalizada; 
+                    }
+                    else {
+                        velocidades[3] += pos_normalizada;
+                    }
 
                     Raspberry::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*templateSize);
                 }
-                
+
                 client.sendBytes(sizeof(velocidades), (Raspberry::Byte*) velocidades);
+
+                putText(frameBuf, "Seguindo", Point(160, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::red, 1.8);                                
             }
+
+
 
             // Coloca o teclado 
             hconcat(teclado, frameBuf, frameBuf);  

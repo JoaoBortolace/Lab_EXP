@@ -18,6 +18,7 @@ int main(int argc, char *argv[])
         // Inicializa o servidor
         Server server(argv[1], 30);
         server.waitConnection();
+        server.setCompressaoQualidade(50);
 
         // Controle dos Motores
         Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
