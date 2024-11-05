@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
         Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
         Raspberry::Controle controle = Raspberry::Controle::MANUAL;
 
-        Raspberry::motorInit();
+        Raspberry::motorInitPwm();
 
         // Inicia a camera e configura a camera
         VideoCapture camera(CAMERA_VIDEO);
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
             // Modos de operação
             if (controle == Raspberry::Controle::MANUAL) {
                 // Passa o comando para o motor
-                Raspberry::motorSetDirPwm(comando, 100);
+                Raspberry::motorSetDirPwm(comando, PWM_MAX);
             }
             else { // Modo Autômato
                 int velocidades[4];

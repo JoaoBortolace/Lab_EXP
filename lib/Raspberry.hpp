@@ -20,6 +20,7 @@
 #define TECLADO_WIDTH           TECLADO_HEIGHT      
 #define BUTTON_WIDTH            80U
 #define BUTTON_HEIGHT           80U
+#define PWM_MAX                 10000
 
 using namespace cv;
 
@@ -239,16 +240,16 @@ namespace Raspberry
     {
         wiringPiSetup();
         
-        if (softPwmCreate(M1_A, 0, 100))
+        if (softPwmCreate(M1_A, 0, PWM_MAX))
             throw std::runtime_error("Erro ao criar o PWM do M1_A");
 
-        if (softPwmCreate(M1_B, 0, 100))
+        if (softPwmCreate(M1_B, 0, PWM_MAX))
             throw std::runtime_error("Erro ao criar o PWM do M1_B");
 
-        if (softPwmCreate(M2_A, 0, 100))
+        if (softPwmCreate(M2_A, 0, PWM_MAX))
             throw std::runtime_error("Erro ao criar o PWM do M2_A");
 
-        if (softPwmCreate(M2_B, 0, 100))
+        if (softPwmCreate(M2_B, 0, PWM_MAX))
             throw std::runtime_error("Erro ao criar o PWM do M2_B");
     }
 
@@ -483,7 +484,7 @@ namespace Raspberry
     {
         Mat_<Flt> clone = imagem.clone();
         
-        double soma=0.0;
+        double soma = 0.0;
         for (auto it = clone.begin(); it != clone.end(); it++) {
             soma += abs(*it);
         }
@@ -545,7 +546,6 @@ namespace Raspberry
 
    inline void getModeloPreProcessados(Mat_<Flt>& modelo, Mat_<Flt> modelosPreProcessados[], uint8_t numEscalas, float escala, float escalaMin=0.0f)
    {
-        #pragma omp parallel for
         for (auto i = 0; i < numEscalas; i++) {
             auto fator = escala*i + escalaMin;
             Mat_<Raspberry::Flt> temp;

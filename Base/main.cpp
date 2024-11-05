@@ -14,7 +14,6 @@
 #define THRESHOLD       0.65f
 
 /* -------- Variáveis Globais -------- */
-static Raspberry::Controle controle = Raspberry::Controle::MANUAL;
 static Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
 static Mat_<Raspberry::Cor> teclado;
 
@@ -60,6 +59,9 @@ int main(int argc, char *argv[])
     // Para armazenar as imagens recebidas
     Mat_<Raspberry::Cor> frameBuf;
     Mat_<Raspberry::Flt> frameBufFlt;
+
+    // MOdos de operação
+    Raspberry::Controle controle = Raspberry::Controle::MANUAL;
         
     try {
         // Conecta à Raspberry
@@ -84,7 +86,7 @@ int main(int argc, char *argv[])
                 Raspberry::Cor2Flt(frameBuf, frameBufFlt);
 
                 // Realiza o template matching pelas diferentes escalas
-                std::vector<Raspberry::FindPos> findPos(NUM_ESCALAS);
+                Raspberry::FindPos findPos[NUM_ESCALAS]{-1.0, Raspberry::CorrelacaoPonto{-1.0, Point(0, 0)}};
                 
                 #pragma omp parallel for
                 for (auto n = 0; n < NUM_ESCALAS; n++) {
@@ -96,39 +98,36 @@ int main(int argc, char *argv[])
 
                     // Captura somente os pontos encontrados acima do limiar   
                     if (correlacaoPonto.correlacao > THRESHOLD) {
-                        auto fator = escala*n + ESCALA_MIN;
-
-                        #pragma omp critical
-                        findPos.push_back(Raspberry::FindPos {fator, correlacaoPonto});
+                        findPos[n] = Raspberry::FindPos {escala*n + ESCALA_MIN, correlacaoPonto};
                     }
                 }
 
                 // Busca a maior correlação encontrada
-                Raspberry::FindPos maxCorr;
-                maxCorr.escala = -1.0;
-                maxCorr.ponto.correlacao = 0.0;
+                Raspberry::FindPos maxCorr = findPos[0];
 
-                for (auto find : findPos) {
-                    if (find.ponto.correlacao > maxCorr.ponto.correlacao) {
-                        maxCorr = find;
+                for (auto i = 1; i < NUM_ESCALAS; i++) {
+                    if (findPos[i].ponto.correlacao > maxCorr.ponto.correlacao) {
+                        maxCorr = findPos[i];
                     }
                 }
 
+                // Altera as velocidades dos motores para o carrinho seguir o template
                 int velocidades[4] = {0};
 
-                // Desenha um retangulo na posição de maior correlação encontrada
                 if (maxCorr.escala > 0) {
-                    velocidades[1] = velocidades[3] = 100;
+                    velocidades[1] = velocidades[3] = PWM_MAX;
 
+                    // Se o ponto encontrado estiver na extrema direita => 100, extrema esquerda => -100, centro => 0
                     int pos_normalizada = (int) ((maxCorr.ponto.posicao.x - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/100.0)); 
-
+                    
                     if (pos_normalizada > 0) {
-                        velocidades[1] -= pos_normalizada; 
+                        velocidades[1] -= (pos_normalizada*pos_normalizada); 
                     }
                     else {
-                        velocidades[3] += pos_normalizada;
+                        velocidades[3] -= (pos_normalizada*pos_normalizada);
                     }
-
+                    
+                    // Desenha um retangulo na posição de maior correlação encontrada
                     Raspberry::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*templateSize);
                 }
 
@@ -136,8 +135,6 @@ int main(int argc, char *argv[])
 
                 putText(frameBuf, "Seguindo", Point(160, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::red, 1.8);                                
             }
-
-
 
             // Coloca o teclado 
             hconcat(teclado, frameBuf, frameBuf);  
