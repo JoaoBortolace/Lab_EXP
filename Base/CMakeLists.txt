@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.28)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
 set(ProjectName Base)
+add_compile_definitions(BASE)
+
 project(${ProjectName} LANGUAGES CXX)
 
 # Diretório atual
@@ -35,26 +37,41 @@ endif()
 # Encontre o pacote OpenCV
 find_package(OpenCV REQUIRED)
 
-find_package(OpenMP REQUIRED COMPONENTS CXX)
-
 if(NOT OpenCV_FOUND)
     message(FATAL_ERROR "OpenCV not found!")
 endif()
 
+# Encontre o pacote OpenMP
+find_package(OpenMP REQUIRED COMPONENTS CXX)
+
 if(NOT OpenMP_FOUND)
     message(FATAL_ERROR "OpenMP not found!")
+endif()
+
+# Encontre o pacote PyTorch
+set(CMAKE_PREFIX_PATH "$ENV{HOME}/libtorch") # Caminho para biblioteca do PyTorch
+find_package(Torch REQUIRED)
+
+if(NOT Torch_FOUND)
+     message(FATAL_ERROR "PyTorch not found!")
 endif()
 
 # Adiciona a pasta dos arquivos auxiliares
 include_directories(${LIB_DIR})
 file(GLOB programa "${LIB_DIR}/*.cpp")
 
+# Flags do Torch
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
 # Define o executável e as bibliotecas
 add_executable(${ProjectName} main.cpp ${programa})
 
 # Adiciona as bibliotecas necessárias ao projeto
 target_link_libraries(${ProjectName} PUBLIC OpenMP::OpenMP_CXX ${OpenCV_LIBS})
+target_link_libraries(${ProjectName} PRIVATE ${TORCH_LIBRARIES})
 
 # Define flags para o OpenMP
 target_compile_options(${ProjectName} PUBLIC ${OpenMP_CXX_FLAGS})
 target_link_options(${ProjectName} PUBLIC ${OpenMP_CXX_FLAGS})
+
+set_property(TARGET ${ProjectName} PROPERTY CXX_STANDARD 14)

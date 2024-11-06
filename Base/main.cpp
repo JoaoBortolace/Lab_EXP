@@ -38,7 +38,7 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
 /* -------- Main -------- */
 int main(int argc, char *argv[])
 {
-    if (argc < 4) {
+    if (argc < 5) {
         Raspberry::erro("Poucos argumentos.");
     }
 
@@ -63,15 +63,19 @@ int main(int argc, char *argv[])
 
     // Modos de operação
     Raspberry::Controle controle = Raspberry::Controle::MANUAL;
+
+    // Modelo para reconhecer o número do MNIST
+    torch::jit::script::Module model;
         
     try {
         // Conecta à Raspberry
         Client client(argv[1], argv[2]);
         client.waitConnection();
 
-        while (true) {
-            auto t1 = Raspberry::timeSinceEpoch();
-            
+        // Carraga o modelo
+        model = torch::jit::load(argv[4]);
+
+        while (true) {            
             // Recebe os quadros e envia o comando
             client.receiveImageCompactada(frameBuf);
             client.sendBytes(sizeof(Raspberry::Comando), (Raspberry::Byte *) &comando);  
@@ -87,7 +91,7 @@ int main(int argc, char *argv[])
                 ImageProcessing::Cor2Flt(frameBuf, frameBufFlt);
 
                 // Realiza o template matching pelas diferentes escalas
-                std::vector<Raspberry::FindPos> findPos(NUM_ESCALAS);
+                Raspberry::FindPos findPos[NUM_ESCALAS];
                 
                 #pragma omp parallel for
                 for (auto n = 0; n < NUM_ESCALAS; n++) {
@@ -96,44 +100,46 @@ int main(int argc, char *argv[])
 
                     Raspberry::CorrelacaoPonto correlacaoPonto;
                     minMaxLoc(correlacao, NULL, &correlacaoPonto.correlacao, NULL, &correlacaoPonto.posicao);
-
-                    // Captura somente os pontos encontrados acima do limiar   
-                    if (correlacaoPonto.correlacao > THRESHOLD) {
-                        #pragma omp critical
-                        findPos.push_back(Raspberry::FindPos {escala*n + ESCALA_MIN, correlacaoPonto});
-                    }
+                    
+                    findPos[n] = Raspberry::FindPos{escala*n + ESCALA_MIN, correlacaoPonto};
                 }
 
                 // Busca a maior correlação encontrada
                 Raspberry::FindPos maxCorr = findPos[0];
-                for (auto find : findPos) {
-                    if (find.ponto.correlacao > maxCorr.ponto.correlacao) {
-                        maxCorr = find;
+                for (auto i = 1; i < NUM_ESCALAS; i++) {
+                    if (findPos[i].ponto.correlacao > maxCorr.ponto.correlacao) {
+                        maxCorr = findPos[i];
                     }
                 }
 
                 // Altera as velocidades dos motores para o carrinho seguir o template
                 int velocidades[4] = {0};
 
-                if (maxCorr.escala > 0) {
+                // Somente se o ponto encontrado está acima do limiar   
+                if (maxCorr.ponto.correlacao > THRESHOLD) {
                     velocidades[1] = velocidades[3] = PWM_MAX;
 
                     // Se o ponto encontrado estiver na extrema direita => 100, extrema esquerda => -100, centro => 0
-                    int pos_normalizada = (int) ((maxCorr.ponto.posicao.x - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/100.0)); 
+                    int pos_normalizada = (int) ((maxCorr.ponto.posicao.x - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/(PWM_MAX*10.0))); 
                     
                     if (pos_normalizada > 0) {
-                        velocidades[1] -= pos_normalizada; 
+                        velocidades[1] -= (pos_normalizada*pos_normalizada); 
                     }
                     else {
-                        velocidades[3] += pos_normalizada;
+                        velocidades[3] -= (pos_normalizada*pos_normalizada);
                     }
                     
                     // Desenha um retangulo na posição de maior correlação encontrada
                     ImageProcessing::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*templateSize);
 
                     // Captura o número do MNIST no modelo encontrado
-                    Mat_<Raspberry::Flt> numEncontrado = ImageProcessing::MNIST::getMNIST(frameBufFlt, maxCorr.ponto.posicao, maxCorr.escala*NUM_SIZE);
-                    imshow("encontrado", numEncontrado);
+                    Mat_<Raspberry::Flt> numEncontrado = MNIST::getMNIST(frameBufFlt, maxCorr.ponto.posicao, maxCorr.escala*NUM_SIZE);
+                    
+                    // // Realiza a predição do numero encontrado
+                    int numero = MNIST::inferenciaMNIST(numEncontrado, model);
+                    
+                    // // Adiciona o número predito
+                    putText(frameBuf, std::to_string(numero), Point(20, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::grey, 1.2); 
                 }
 
                 // Envias o comando com os valores dos PWMs dos motores
@@ -148,12 +154,9 @@ int main(int argc, char *argv[])
 
             // Exibi o quadro
             imshow("RaspCam", frameBuf);
-            if ((waitKey(1) & 0xFF)  == 27) { // Esc
+            if (waitKey(1)  == 27) { // Esc
                 break;
             }
-
-            auto t2 = Raspberry::timeSinceEpoch();
-            std::cout << "\r" << 1.0/(t2 - t1) << " FPS" << std::flush;
         }
     }
     catch (const std::exception& e) {

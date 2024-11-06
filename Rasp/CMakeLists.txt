@@ -4,7 +4,7 @@ set(ProjectName Rasp)
 project(${ProjectName})
 
 # Diretivas de compilação
-add_compile_definitions(RASP_PINS)
+add_compile_definitions(RASP)
 
 # Diretório atual
 set(CURRENT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")

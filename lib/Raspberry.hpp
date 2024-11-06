@@ -12,20 +12,30 @@
 #include <chrono>
 #include <vector>
 
+#ifdef BASE
+#include <torch/script.h>
+#endif
+
+#ifdef RASP
+#include <wiringPi.h>
+#include <softPwm.h>
+#endif
+
 /* -------- Defines -------- */
 #define CAMERA_VIDEO        0
 #define CAMERA_FRAME_HEIGHT     240
 #define CAMERA_FRAME_WIDTH      320
 #define TECLADO_HEIGHT          CAMERA_FRAME_HEIGHT
 #define TECLADO_WIDTH           TECLADO_HEIGHT      
-#define BUTTON_WIDTH            80U
-#define BUTTON_HEIGHT           80U
+#define BUTTON_WIDTH            80
+#define BUTTON_HEIGHT           80
 #define PWM_MAX                 100
-
-using namespace cv;
+#define MNIST_SIZE              28
 
 #define xdebug { string st = "File="+string(__FILE__)+" line="+to_string(__LINE__)+"\n"; cout << st; }
 #define xprint(x) { ostringstream os; os << #x " = " << x << '\n'; cout << os.str(); }
+
+using namespace cv;
 
 namespace Raspberry
 {
@@ -77,11 +87,7 @@ namespace Raspberry
         return duration_cast<duration<double>>( system_clock::now().time_since_epoch() ).count();
     }
 
-    #ifdef RASP_PINS
-
-    #include <wiringPi.h>
-    #include <softPwm.h>
-    
+    #ifdef RASP    
     #define M1_A    0
     #define M1_B    1
     #define M2_A    2
@@ -289,6 +295,14 @@ namespace Raspberry
     #endif
 
     /*
+     * Função para facilitar a printar
+     */
+    inline void print(std::string s1="")
+    {
+        std::cout << s1 << std::endl;
+    }
+
+    /*
      * Printa o erro e encerra o programa, caso seja chamado pela Raspberry, também parará os motores
      */
     inline void erro(std::string s1="") 
@@ -302,6 +316,7 @@ namespace Raspberry
         exit(1);
     }
 
+    #ifdef BASE
     namespace Paleta 
     {
         const Raspberry::Cor red(0x58, 0x48, 0xFF);
@@ -458,7 +473,10 @@ namespace Raspberry
         int y = 0.5*(a.y + b.y);
         return Point{x, y};
     }
+    #endif // Base
 } // namespace Raspberry
+
+#ifdef BASE
 
 namespace ImageProcessing
 {
@@ -550,6 +568,7 @@ namespace ImageProcessing
          */
         inline void getModeloPreProcessados(Mat_<Flt>& modelo, Mat_<Flt> modelosPreProcessados[], uint8_t numEscalas, float escala, float escalaMin=0.0f)
         {
+            #pragma omp parallel for
             for (auto i = 0; i < numEscalas; i++) {
                 auto fator = escala*i + escalaMin;
                 Mat_<Raspberry::Flt> temp;
@@ -561,23 +580,45 @@ namespace ImageProcessing
             }
         }
     } // namespace TemplateMatching
-
-    namespace MNIST
-    {
-        /*
-         * Recorta a imagem para obter o numero MNIST no ponto passado, retorna ele no formato MNIST
-         */
-        inline Mat_<Raspberry::Flt> getMNIST(Mat_<Flt>& imagem, Point center, float size)
-        {
-            // Cálculo dos pontos de recorte
-            Point a {max(int(center.x - size*0.5), 0), max(int(center.y - size*0.5), 0)};      
-            Point b {min(int(center.x + size*0.5), CAMERA_FRAME_WIDTH), min(int(center.y + size*0.5), CAMERA_FRAME_HEIGHT)};
-
-            // Recorte da imagem usando as coordenadas calculadas
-            Rect region(a.x, a.y, b.x - a.x, b.y - a.y); // Definir a região do recorte
-            Mat_<Raspberry::Flt> recorte = imagem(region);   
-        }
-    } // namespace MNIST
 } // namespace ImageProcessing
 
-#endif
+namespace MNIST
+{
+    /*
+     * Recorta a imagem para obter o numero MNIST no ponto passado, retorna ele no formato MNIST
+     */
+    inline Mat_<Raspberry::Flt> getMNIST(Mat_<Raspberry::Flt>& imagem, Point center, float size)
+    {
+        // Cálculo dos pontos de recorte
+        Point a {std::max(int(center.x - size*0.5), 0), std::max(int(center.y - size*0.5), 0)};      
+        Point b {std::min(int(center.x + size*0.5), CAMERA_FRAME_WIDTH), std::min(int(center.y + size*0.5), CAMERA_FRAME_HEIGHT)};
+
+        // Recorte da imagem usando as coordenadas calculadas
+        Rect region(a.x, a.y, b.x - a.x, b.y - a.y); // Definir a região do recorte
+        
+        Mat_<Raspberry::Flt> mnist_num = imagem(region);  
+        mnist_num.resize(MNIST_SIZE, MNIST_SIZE);
+
+        return mnist_num;
+    }
+
+    /*
+     * Realiza a inferência do MNIST passado
+     */
+    inline int inferenciaMNIST(Mat_<Raspberry::Flt>& imagem, torch::jit::script::Module& modelo)
+    {
+        // Converte o tipo para poder inserir no modelo
+        torch::Tensor numEncontradoTensor = torch::from_blob(imagem.data, {MNIST_SIZE, MNIST_SIZE, 1}, torch::kFloat32);
+
+        // Executar o modelo
+        torch::Tensor outputTensor = modelo.forward({numEncontradoTensor}).toTensor();
+
+        // Obtem o numero predito
+        return outputTensor.argmax(1).item<int>();
+    }
+
+} // namespace MNIST
+
+#endif // Base
+
+#endif  // RASPBERRY_HPP
