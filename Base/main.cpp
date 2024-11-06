@@ -6,6 +6,9 @@
 /* -------- Includes -------- */
 #include "Raspberry.hpp"
 #include "Client.hpp"
+#include <torch/script.h> // eh aqui o o include do pytorch??? nao esquecer das flags de compilar
+
+
 
 /* -------- Defines -------- */
 #define NUM_ESCALAS     20
@@ -51,6 +54,22 @@ int main(int argc, char *argv[])
     Mat_<Raspberry::Flt> modelo;
     Raspberry::Cor2Flt(imread(argv[3], 1), modelo);
     const int templateSize = modelo.cols;
+
+    /* -------- Carregando modelo do PyTorch -------- */
+
+
+    std::shared_ptr<torch::jit::script::Module> module;
+    try {
+        module = torch::jit::load("lenet5_model.pt");
+    }
+    catch (const c10::Error& e) {
+        std::cerr << "Erro ao carregar o modelo: " << e.what() << std::endl;
+        return -1;
+    }
+
+    std::cout << "Modelo carregado com sucesso\n";
+
+
 
     // Para conseguir detectar o modelo para diferentes distâncias é nescessário obtê-lo em diferêntes escalas
     Mat_<Raspberry::Flt> modelosPreProcessados[NUM_ESCALAS];
@@ -146,7 +165,35 @@ int main(int argc, char *argv[])
                     // Recorte da imagem usando as coordenadas calculadas
                     Rect region(a.x, a.y, b.x - a.x, b.y - a.y); // Definir a região do recorte
                     Mat numEncontrado = frameBufFlt(region);
-                    imshow("encontrado", numEncontrado);
+                    // Parte Mario: pegando o numEncontrado
+                    if (!numEncontrado.empty()) {
+                    // Converter para escala de cinza
+                            cv::Mat numGray;
+                            cv::cvtColor(numEncontrado, numGray, cv::COLOR_BGR2GRAY);
+
+                            // Redimensionar para 28x28
+                            cv::Mat numResized;
+                            cv::resize(numGray, numResized, cv::Size(28, 28));
+
+                            // Normalizar os pixels para [0, 1]
+                            numResized.convertTo(numResized, CV_32F, 1.0 / 255.0);
+
+                            // Converter o cv::Mat em tensor
+                            auto img_tensor = torch::from_blob(numResized.data, {1, 1, 28, 28});
+                            img_tensor = img_tensor.clone(); // Evitar problemas com a memória
+
+                            // Passar pelo modelo
+                            torch::Tensor output = module->forward({img_tensor}).toTensor();
+
+                            // Obter a classe prevista
+                            int predicted_class = output.argmax(1).item<int>();
+
+                            // Mostrar o resultado na imagem
+                            cv::putText(frameBuf, "Previsto: " + std::to_string(predicted_class), cv::Point(a.x, a.y - 10),
+                                        cv::FONT_HERSHEY_SIMPLEX, 1.0, Raspberry::Paleta::blue, 2);
+
+                            cv::imshow("Num Encontrado", numEncontrado);
+                        }
                 }
 
                 client.sendBytes(sizeof(velocidades), (Raspberry::Byte*) velocidades);
