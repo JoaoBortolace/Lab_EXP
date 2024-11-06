@@ -12,6 +12,7 @@
 #define ESCALA_MAX      0.4f 
 #define ESCALA_MIN      0.03f
 #define THRESHOLD       0.65f
+#define NUM_SIZE        280
 
 /* -------- Variáveis Globais -------- */
 static Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
@@ -130,6 +131,22 @@ int main(int argc, char *argv[])
                     
                     // Desenha um retangulo na posição de maior correlação encontrada
                     Raspberry::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*templateSize);
+
+                    // Cálculo dos pontos de recorte
+                    Point a {
+                        std::max(int(maxCorr.ponto.posicao.x - maxCorr.escala * NUM_SIZE * 0.5), 0), 
+                        std::max(int(maxCorr.ponto.posicao.y - maxCorr.escala * NUM_SIZE * 0.5), 0)
+                    };
+                    
+                    Point b {
+                        std::min(int(maxCorr.ponto.posicao.x + maxCorr.escala * NUM_SIZE * 0.5), frameBufFlt.cols), // frameBufFlt.cols dá a largura da imagem
+                        std::min(int(maxCorr.ponto.posicao.y + maxCorr.escala * NUM_SIZE * 0.5), frameBufFlt.rows) // frameBufFlt.rows dá a altura da imagem
+                    };
+
+                    // Recorte da imagem usando as coordenadas calculadas
+                    Rect region(a.x, a.y, b.x - a.x, b.y - a.y); // Definir a região do recorte
+                    Mat numEncontrado = frameBufFlt(region);
+                    imshow("encontrado", numEncontrado);
                 }
 
                 client.sendBytes(sizeof(velocidades), (Raspberry::Byte*) velocidades);
