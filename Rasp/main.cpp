@@ -18,7 +18,6 @@ int main(int argc, char *argv[])
         // Inicializa o servidor
         Server server(argv[1], 30);
         server.waitConnection();
-        server.setCompressaoQualidade(50);
 
         // Controle dos Motores
         Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
@@ -54,12 +53,12 @@ int main(int argc, char *argv[])
             // Modos de operação
             if (controle == Raspberry::Controle::MANUAL) {
                 // Passa o comando para o motor
-                Raspberry::motorSetDirPwm(comando, PWM_MAX);
+                Raspberry::Motores::motorSetDirPwm(comando, PWM_MAX);
             }
             else { // Modo Autômato
                 int velocidades[4];
                 server.receiveBytes(sizeof(velocidades), (Raspberry::Byte *) velocidades);
-                Raspberry::motorSetVel(velocidades);
+                Raspberry::Motores::motorSetVel(velocidades);
             }
         }
     }
@@ -68,7 +67,7 @@ int main(int argc, char *argv[])
     }
 
     // Desliga os motores
-    Raspberry::motorStop();
+    Raspberry::Motores::motorStop();
     
     return 0;
 }

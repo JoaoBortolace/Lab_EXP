@@ -78,6 +78,7 @@ namespace Raspberry
     }
 
     #ifdef RASP_PINS
+
     #include <wiringPi.h>
     #include <softPwm.h>
     
@@ -86,227 +87,219 @@ namespace Raspberry
     #define M2_A    2
     #define M2_B    3
 
-    /*
-     * Inicializa os GPIOs do controle da ponte H
-     */
-    inline void motorInit()
+    namespace Motores
     {
-        wiringPiSetup();
-        pinMode (M1_A, OUTPUT);
-        pinMode (M1_B, OUTPUT);
-        pinMode (M2_A, OUTPUT);
-        pinMode (M2_B, OUTPUT);
+        /*
+         * Inicializa os GPIOs do controle da ponte H
+         */
+        inline void motorInit()
+        {
+            wiringPiSetup();
+            pinMode (M1_A, OUTPUT);
+            pinMode (M1_B, OUTPUT);
+            pinMode (M2_A, OUTPUT);
+            pinMode (M2_B, OUTPUT);
 
-        digitalWrite(M1_A, LOW);
-        digitalWrite(M1_B, LOW);
-        digitalWrite(M2_A, LOW);
-        digitalWrite(M2_B, LOW);
-    }
-
-    /*
-     * Seta a direção de rotação dos motores, conforme o comando passado
-     */
-    inline void motorSetDir(Comando comando) 
-    {
-        switch (comando) {
-            case FRENTE:
-                digitalWrite(M1_A, LOW);
-                digitalWrite(M1_B, HIGH);
-                digitalWrite(M2_A, LOW);
-                digitalWrite(M2_B, HIGH);
-                break;
-            case ATRAS:
-                digitalWrite(M1_A, HIGH);
-                digitalWrite(M1_B, LOW);
-                digitalWrite(M2_A, HIGH);
-                digitalWrite(M2_B, LOW);
-                break;
-            case DIAGONAL_FRENTE_DIREITA:
-                digitalWrite(M1_A, LOW);
-                digitalWrite(M1_B, LOW);
-                digitalWrite(M2_A, LOW);
-                digitalWrite(M2_B, HIGH);
-                break;
-            case DIAGONAL_FRENTE_ESQUERDA:
-                digitalWrite(M1_A, LOW);
-                digitalWrite(M1_B, HIGH);
-                digitalWrite(M2_A, LOW);
-                digitalWrite(M2_B, LOW);
-                break;
-            case DIAGONAL_ATRAS_DIREITA:
-                digitalWrite(M1_A, LOW);
-                digitalWrite(M1_B, LOW);
-                digitalWrite(M2_A, HIGH);
-                digitalWrite(M2_B, LOW);
-                break;
-            case DIAGONAL_ATRAS_ESQUERDA:
-                digitalWrite(M1_A, HIGH);
-                digitalWrite(M1_B, LOW);
-                digitalWrite(M2_A, LOW);
-                digitalWrite(M2_B, LOW);
-                break;
-            case GIRA_ESQUERDA:
-                digitalWrite(M1_A, LOW);
-                digitalWrite(M1_B, HIGH);
-                digitalWrite(M2_A, HIGH);
-                digitalWrite(M2_B, LOW);
-                break;
-            case GIRA_DIREITA:
-                digitalWrite(M1_A, HIGH);
-                digitalWrite(M1_B, LOW);
-                digitalWrite(M2_A, LOW);
-                digitalWrite(M2_B, HIGH);
-                break;
-            case ALTERNA_MODO:            
-            case NAO_SELECIONADO:
-            default:
-                digitalWrite(M1_A, LOW);
-                digitalWrite(M1_B, LOW);
-                digitalWrite(M2_A, LOW);
-                digitalWrite(M2_B, LOW);
-                break;
+            digitalWrite(M1_A, LOW);
+            digitalWrite(M1_B, LOW);
+            digitalWrite(M2_A, LOW);
+            digitalWrite(M2_B, LOW);
         }
-    }
 
-    /*
-     * Seta a direção de rotação dos motores, conforme o comando passado
-     */
-    inline void motorSetDirPwm(Comando comando, int velocidade) 
-    {
-        switch (comando) {
-            case FRENTE:
-                softPwmWrite(M1_A, 0);
-                softPwmWrite(M1_B, velocidade);
-                softPwmWrite(M2_A, 0);
-                softPwmWrite(M2_B, velocidade);
-                break;
-            case ATRAS:
-                softPwmWrite(M1_A, velocidade);
-                softPwmWrite(M1_B, 0);
-                softPwmWrite(M2_A, velocidade);
-                softPwmWrite(M2_B, 0);
-                break;
-            case DIAGONAL_FRENTE_DIREITA:
-                softPwmWrite(M1_A, 0);
-                softPwmWrite(M1_B, 0);
-                softPwmWrite(M2_A, 0);
-                softPwmWrite(M2_B, velocidade);
-                break;
-            case DIAGONAL_FRENTE_ESQUERDA:
-                softPwmWrite(M1_A, 0);
-                softPwmWrite(M1_B, velocidade);
-                softPwmWrite(M2_A, 0);
-                softPwmWrite(M2_B, 0);
-                break;
-            case DIAGONAL_ATRAS_DIREITA:
-                softPwmWrite(M1_A, 0);
-                softPwmWrite(M1_B, 0);
-                softPwmWrite(M2_A, velocidade);
-                softPwmWrite(M2_B, 0);
-                break;
-            case DIAGONAL_ATRAS_ESQUERDA:
-                softPwmWrite(M1_A, velocidade);
-                softPwmWrite(M1_B, 0);
-                softPwmWrite(M2_A, 0);
-                softPwmWrite(M2_B, 0);
-                break;
-            case GIRA_ESQUERDA:
-                softPwmWrite(M1_A, 0);
-                softPwmWrite(M1_B, velocidade);
-                softPwmWrite(M2_A, velocidade);
-                softPwmWrite(M2_B, 0);
-                break;
-            case GIRA_DIREITA:
-                softPwmWrite(M1_A, velocidade);
-                softPwmWrite(M1_B, 0);
-                softPwmWrite(M2_A, 0);
-                softPwmWrite(M2_B, velocidade);
-                break;
-            case ALTERNA_MODO:            
-            case NAO_SELECIONADO:
-            default:
-                softPwmWrite(M1_A, 0);
-                softPwmWrite(M1_B, 0);
-                softPwmWrite(M2_A, 0);
-                softPwmWrite(M2_B, 0);
-                break;
+        /*
+         * Seta a direção de rotação dos motores, conforme o comando passado
+         */
+        inline void motorSetDir(Comando comando) 
+        {
+            switch (comando) {
+                case FRENTE:
+                    digitalWrite(M1_A, LOW);
+                    digitalWrite(M1_B, HIGH);
+                    digitalWrite(M2_A, LOW);
+                    digitalWrite(M2_B, HIGH);
+                    break;
+                case ATRAS:
+                    digitalWrite(M1_A, HIGH);
+                    digitalWrite(M1_B, LOW);
+                    digitalWrite(M2_A, HIGH);
+                    digitalWrite(M2_B, LOW);
+                    break;
+                case DIAGONAL_FRENTE_DIREITA:
+                    digitalWrite(M1_A, LOW);
+                    digitalWrite(M1_B, LOW);
+                    digitalWrite(M2_A, LOW);
+                    digitalWrite(M2_B, HIGH);
+                    break;
+                case DIAGONAL_FRENTE_ESQUERDA:
+                    digitalWrite(M1_A, LOW);
+                    digitalWrite(M1_B, HIGH);
+                    digitalWrite(M2_A, LOW);
+                    digitalWrite(M2_B, LOW);
+                    break;
+                case DIAGONAL_ATRAS_DIREITA:
+                    digitalWrite(M1_A, LOW);
+                    digitalWrite(M1_B, LOW);
+                    digitalWrite(M2_A, HIGH);
+                    digitalWrite(M2_B, LOW);
+                    break;
+                case DIAGONAL_ATRAS_ESQUERDA:
+                    digitalWrite(M1_A, HIGH);
+                    digitalWrite(M1_B, LOW);
+                    digitalWrite(M2_A, LOW);
+                    digitalWrite(M2_B, LOW);
+                    break;
+                case GIRA_ESQUERDA:
+                    digitalWrite(M1_A, LOW);
+                    digitalWrite(M1_B, HIGH);
+                    digitalWrite(M2_A, HIGH);
+                    digitalWrite(M2_B, LOW);
+                    break;
+                case GIRA_DIREITA:
+                    digitalWrite(M1_A, HIGH);
+                    digitalWrite(M1_B, LOW);
+                    digitalWrite(M2_A, LOW);
+                    digitalWrite(M2_B, HIGH);
+                    break;
+                case ALTERNA_MODO:            
+                case NAO_SELECIONADO:
+                default:
+                    digitalWrite(M1_A, LOW);
+                    digitalWrite(M1_B, LOW);
+                    digitalWrite(M2_A, LOW);
+                    digitalWrite(M2_B, LOW);
+                    break;
+            }
         }
-    }
 
-    /*
-     * Inicializa os PWMs do controle da ponte H
-     */
-    inline void motorInitPwm()
-    {
-        wiringPiSetup();
-        
-        if (softPwmCreate(M1_A, 0, PWM_MAX))
-            throw std::runtime_error("Erro ao criar o PWM do M1_A");
+        /*
+         * Seta a direção de rotação dos motores, conforme o comando passado
+         */
+        inline void motorSetDirPwm(Comando comando, int velocidade) 
+        {
+            switch (comando) {
+                case FRENTE:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, velocidade);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, velocidade);
+                    break;
+                case ATRAS:
+                    softPwmWrite(M1_A, velocidade);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, velocidade);
+                    softPwmWrite(M2_B, 0);
+                    break;
+                case DIAGONAL_FRENTE_DIREITA:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, velocidade);
+                    break;
+                case DIAGONAL_FRENTE_ESQUERDA:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, velocidade);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, 0);
+                    break;
+                case DIAGONAL_ATRAS_DIREITA:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, velocidade);
+                    softPwmWrite(M2_B, 0);
+                    break;
+                case DIAGONAL_ATRAS_ESQUERDA:
+                    softPwmWrite(M1_A, velocidade);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, 0);
+                    break;
+                case GIRA_ESQUERDA:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, velocidade);
+                    softPwmWrite(M2_A, velocidade);
+                    softPwmWrite(M2_B, 0);
+                    break;
+                case GIRA_DIREITA:
+                    softPwmWrite(M1_A, velocidade);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, velocidade);
+                    break;
+                case ALTERNA_MODO:            
+                case NAO_SELECIONADO:
+                default:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, 0);
+                    break;
+            }
+        }
 
-        if (softPwmCreate(M1_B, 0, PWM_MAX))
-            throw std::runtime_error("Erro ao criar o PWM do M1_B");
+        /*
+         * Inicializa os PWMs do controle da ponte H
+         */
+        inline void motorInitPwm()
+        {
+            wiringPiSetup();
+            
+            if (softPwmCreate(M1_A, 0, PWM_MAX))
+                throw std::runtime_error("Erro ao criar o PWM do M1_A");
 
-        if (softPwmCreate(M2_A, 0, PWM_MAX))
-            throw std::runtime_error("Erro ao criar o PWM do M2_A");
+            if (softPwmCreate(M1_B, 0, PWM_MAX))
+                throw std::runtime_error("Erro ao criar o PWM do M1_B");
 
-        if (softPwmCreate(M2_B, 0, PWM_MAX))
-            throw std::runtime_error("Erro ao criar o PWM do M2_B");
-    }
+            if (softPwmCreate(M2_A, 0, PWM_MAX))
+                throw std::runtime_error("Erro ao criar o PWM do M2_A");
 
-    /*
-     * Seta a velocidae de rotação dos motores, conforme o comando passado
-     */
-    inline void motorSetVel(int velocidades[]) 
-    {        
-        softPwmWrite(M1_A, velocidades[0]);
-        softPwmWrite(M1_B, velocidades[1]);
-        softPwmWrite(M2_A, velocidades[2]);
-        softPwmWrite(M2_B, velocidades[3]);
-    }
+            if (softPwmCreate(M2_B, 0, PWM_MAX))
+                throw std::runtime_error("Erro ao criar o PWM do M2_B");
+        }
 
-    /*
-     * Para os motores
-     */
-    inline void motorStop() 
-    {        
-        softPwmWrite(M1_A, 0);
-        softPwmWrite(M1_B, 0);
-        softPwmWrite(M2_A, 0);
-        softPwmWrite(M2_B, 0);
-        softPwmStop(M1_A);
-        softPwmStop(M1_B);
-        softPwmStop(M2_A);
-        softPwmStop(M2_B);
-    }
+        /*
+         * Seta a velocidae de rotação dos motores, conforme o comando passado
+         */
+        inline void motorSetVel(int velocidades[]) 
+        {        
+            softPwmWrite(M1_A, velocidades[0]);
+            softPwmWrite(M1_B, velocidades[1]);
+            softPwmWrite(M2_A, velocidades[2]);
+            softPwmWrite(M2_B, velocidades[3]);
+        }
+
+        /*
+         * Para os motores
+         */
+        inline void motorStop() 
+        {        
+            softPwmWrite(M1_A, 0);
+            softPwmWrite(M1_B, 0);
+            softPwmWrite(M2_A, 0);
+            softPwmWrite(M2_B, 0);
+            softPwmStop(M1_A);
+            softPwmStop(M1_B);
+            softPwmStop(M2_A);
+            softPwmStop(M2_B);
+            digitalWrite(M1_A, LOW);
+            digitalWrite(M1_B, LOW);
+            digitalWrite(M2_A, LOW);
+            digitalWrite(M2_B, LOW);
+        }
+    } // namespace Motores
     #endif
-
-    using namespace std;
 
     /*
      * Printa o erro e encerra o programa, caso seja chamado pela Raspberry, também parará os motores
      */
-    inline void erro(string s1="") 
+    inline void erro(std::string s1="") 
     {
         #ifdef RASP_PINS
-        motorSetDir(Comando::NAO_SELECIONADO);
+        Motores::motorStop();
         motorStop();
         #endif
         
-        cerr << s1 << endl;
+        std::cerr << s1 << std::endl;
         exit(1);
-    }
-
-    inline void print(string s1="")
-    {
-        cout << s1 << endl;
-    }
-
-    inline bool testaVb(const std::vector<Raspberry::Byte>& vb, Raspberry::Byte b) {
-        for (unsigned i=0; i<vb.size(); i++)
-            if (vb[i]!=b) { 
-                return false;
-            }
-        return true;
     }
 
     namespace Paleta 
@@ -383,6 +376,7 @@ namespace Raspberry
                 break;
         }
     }
+
     /*
      * Obtém-se qual é o comando equivalente a posição do clique, se for válido, também altera a cor da seta correspondete para vermelho 
      */
@@ -446,18 +440,6 @@ namespace Raspberry
     }
 
     /*
-     * Realiza a busca do modelo na imagem, retorna uma imagem de correlação de mesma dimensão.
-     */
-    inline Mat_<Flt> matchTemplateSame(Mat_<Flt> imagem, Mat_<Flt> modelo, int metodo, Flt backgroundColor = 0.0f)
-    {
-        Mat_<Flt> resultado{imagem.size(), backgroundColor};
-        Rect rect{(modelo.cols-1)/2, (modelo.rows-1)/2, imagem.cols - modelo.cols + 1, imagem.rows - modelo.rows + 1};
-        Mat_<Flt> roi{resultado, rect};
-        matchTemplate(imagem, modelo, roi, metodo);
-        return resultado;
-    }
-
-    /*
      * Calcula a distância euclidiana de dois pontos
      */
     inline double distanciaEuclidiana(Point a, Point b)
@@ -476,6 +458,11 @@ namespace Raspberry
         int y = 0.5*(a.y + b.y);
         return Point{x, y};
     }
+} // namespace Raspberry
+
+namespace ImageProcessing
+{
+    using namespace Raspberry;
 
     /*
      * Torna a somatoria absoluta da imagem dar dois
@@ -544,18 +531,53 @@ namespace Raspberry
         rectangle(image, a, b, color, espessura);
     }
 
-   inline void getModeloPreProcessados(Mat_<Flt>& modelo, Mat_<Flt> modelosPreProcessados[], uint8_t numEscalas, float escala, float escalaMin=0.0f)
-   {
-        for (auto i = 0; i < numEscalas; i++) {
-            auto fator = escala*i + escalaMin;
-            Mat_<Raspberry::Flt> temp;
-
-            resize(modelo, temp, Size(), fator, fator, INTER_NEAREST);
-                    
-            // Para poder usar o metodo de Correlação cruzada é nescessário pre-processar o modelo
-            modelosPreProcessados[i] = Raspberry::modulo2(Raspberry::dcReject(temp, 1.0));
+    namespace TemplateMatching
+    {
+        /*
+        * Realiza a busca do modelo na imagem, retorna uma imagem de correlação de mesma dimensão.
+        */
+        inline Mat_<Flt> matchTemplateSame(Mat_<Flt> imagem, Mat_<Flt> modelo, int metodo, Flt backgroundColor = 0.0f)
+        {
+            Mat_<Flt> resultado{imagem.size(), backgroundColor};
+            Rect rect{(modelo.cols-1)/2, (modelo.rows-1)/2, imagem.cols - modelo.cols + 1, imagem.rows - modelo.rows + 1};
+            Mat_<Flt> roi{resultado, rect};
+            matchTemplate(imagem, modelo, roi, metodo);
+            return resultado;
         }
-    }
-}
+        
+        /*
+         * Retorna o modelo a ser buscado pré-processado e em diferêntes escalas
+         */
+        inline void getModeloPreProcessados(Mat_<Flt>& modelo, Mat_<Flt> modelosPreProcessados[], uint8_t numEscalas, float escala, float escalaMin=0.0f)
+        {
+            for (auto i = 0; i < numEscalas; i++) {
+                auto fator = escala*i + escalaMin;
+                Mat_<Raspberry::Flt> temp;
+
+                resize(modelo, temp, Size(), fator, fator, INTER_NEAREST);
+                        
+                // Para poder usar o metodo de Correlação cruzada é nescessário pre-processar o modelo
+                modelosPreProcessados[i] = ImageProcessing::modulo2(ImageProcessing::dcReject(temp, 1.0));
+            }
+        }
+    } // namespace TemplateMatching
+
+    namespace MNIST
+    {
+        /*
+         * Recorta a imagem para obter o numero MNIST no ponto passado, retorna ele no formato MNIST
+         */
+        inline Mat_<Raspberry::Flt> getMNIST(Mat_<Flt>& imagem, Point center, float size)
+        {
+            // Cálculo dos pontos de recorte
+            Point a {max(int(center.x - size*0.5), 0), max(int(center.y - size*0.5), 0)};      
+            Point b {min(int(center.x + size*0.5), CAMERA_FRAME_WIDTH), min(int(center.y + size*0.5), CAMERA_FRAME_HEIGHT)};
+
+            // Recorte da imagem usando as coordenadas calculadas
+            Rect region(a.x, a.y, b.x - a.x, b.y - a.y); // Definir a região do recorte
+            Mat_<Raspberry::Flt> recorte = imagem(region);   
+        }
+    } // namespace MNIST
+} // namespace ImageProcessing
 
 #endif

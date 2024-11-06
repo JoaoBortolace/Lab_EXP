@@ -49,13 +49,13 @@ int main(int argc, char *argv[])
 
     // Obtem o modelo a ser buscado
     Mat_<Raspberry::Flt> modelo;
-    Raspberry::Cor2Flt(imread(argv[3], 1), modelo);
+    ImageProcessing::Cor2Flt(imread(argv[3], 1), modelo);
     const int templateSize = modelo.cols;
 
     // Para conseguir detectar o modelo para diferentes distâncias é nescessário obtê-lo em diferêntes escalas
     Mat_<Raspberry::Flt> modelosPreProcessados[NUM_ESCALAS];
     const float escala = ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS);
-    Raspberry::getModeloPreProcessados(modelo, modelosPreProcessados, NUM_ESCALAS, escala, ESCALA_MIN);
+    ImageProcessing::TemplateMatching::getModeloPreProcessados(modelo, modelosPreProcessados, NUM_ESCALAS, escala, ESCALA_MIN);
 
     // Para armazenar as imagens recebidas
     Mat_<Raspberry::Cor> frameBuf;
@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
             // Controle Autômato
             if (controle == Raspberry::Controle::AUTOMATO) {
                 // Converte a imagem recebida para float em escala de cinza
-                Raspberry::Cor2Flt(frameBuf, frameBufFlt);
+                ImageProcessing::Cor2Flt(frameBuf, frameBufFlt);
 
                 // Realiza o template matching pelas diferentes escalas
                 std::vector<Raspberry::FindPos> findPos(NUM_ESCALAS);
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
                 #pragma omp parallel for
                 for (auto n = 0; n < NUM_ESCALAS; n++) {
                     // Template matching usando CCOEFF_NORMED
-                    Mat_<Raspberry::Flt> correlacao = Raspberry::matchTemplateSame(frameBufFlt, modelosPreProcessados[n], TM_CCOEFF_NORMED);
+                    Mat_<Raspberry::Flt> correlacao = ImageProcessing::TemplateMatching::matchTemplateSame(frameBufFlt, modelosPreProcessados[n], TM_CCOEFF_NORMED);
 
                     Raspberry::CorrelacaoPonto correlacaoPonto;
                     minMaxLoc(correlacao, NULL, &correlacaoPonto.correlacao, NULL, &correlacaoPonto.posicao);
@@ -106,7 +106,6 @@ int main(int argc, char *argv[])
 
                 // Busca a maior correlação encontrada
                 Raspberry::FindPos maxCorr = findPos[0];
-
                 for (auto find : findPos) {
                     if (find.ponto.correlacao > maxCorr.ponto.correlacao) {
                         maxCorr = find;
@@ -130,26 +129,17 @@ int main(int argc, char *argv[])
                     }
                     
                     // Desenha um retangulo na posição de maior correlação encontrada
-                    Raspberry::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*templateSize);
+                    ImageProcessing::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*templateSize);
 
-                    // Cálculo dos pontos de recorte
-                    Point a {
-                        std::max(int(maxCorr.ponto.posicao.x - maxCorr.escala * NUM_SIZE * 0.5), 0), 
-                        std::max(int(maxCorr.ponto.posicao.y - maxCorr.escala * NUM_SIZE * 0.5), 0)
-                    };
-                    
-                    Point b {
-                        std::min(int(maxCorr.ponto.posicao.x + maxCorr.escala * NUM_SIZE * 0.5), frameBufFlt.cols), // frameBufFlt.cols dá a largura da imagem
-                        std::min(int(maxCorr.ponto.posicao.y + maxCorr.escala * NUM_SIZE * 0.5), frameBufFlt.rows) // frameBufFlt.rows dá a altura da imagem
-                    };
-
-                    // Recorte da imagem usando as coordenadas calculadas
-                    Rect region(a.x, a.y, b.x - a.x, b.y - a.y); // Definir a região do recorte
-                    Mat numEncontrado = frameBufFlt(region);
+                    // Captura o número do MNIST no modelo encontrado
+                    Mat_<Raspberry::Flt> numEncontrado = ImageProcessing::MNIST::getMNIST(frameBufFlt, maxCorr.ponto.posicao, maxCorr.escala*NUM_SIZE);
                     imshow("encontrado", numEncontrado);
                 }
 
+                // Envias o comando com os valores dos PWMs dos motores
                 client.sendBytes(sizeof(velocidades), (Raspberry::Byte*) velocidades);
+
+                // Avisa que está no modo Autonomo
                 putText(frameBuf, "Seguindo", Point(160, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::red, 1.8);                                
             }
 
