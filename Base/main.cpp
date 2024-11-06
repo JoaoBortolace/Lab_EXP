@@ -78,7 +78,6 @@ int main(int argc, char *argv[])
             // Alterna entre o controle manual ou automático
             if (comando == Raspberry::Comando::ALTERNA_MODO) {
                 controle = static_cast<Raspberry::Controle>(~controle & 1);
-                std::cout << controle << std::endl;
             }
 
             // Controle Autômato
@@ -107,9 +106,9 @@ int main(int argc, char *argv[])
                 // Busca a maior correlação encontrada
                 Raspberry::FindPos maxCorr = findPos[0];
 
-                for (auto i = 1; i < NUM_ESCALAS; i++) {
-                    if (findPos[i].ponto.correlacao > maxCorr.ponto.correlacao) {
-                        maxCorr = findPos[i];
+                for (auto find : findPos) {
+                    if (find.ponto.correlacao > maxCorr.ponto.correlacao) {
+                        maxCorr = find;
                     }
                 }
 
