@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     Mat_<Raspberry::Cor> frameBuf;
     Mat_<Raspberry::Flt> frameBufFlt;
 
-    // MOdos de operação
+    // Modos de operação
     Raspberry::Controle controle = Raspberry::Controle::MANUAL;
         
     try {
@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
             // Alterna entre o controle manual ou automático
             if (comando == Raspberry::Comando::ALTERNA_MODO) {
                 controle = static_cast<Raspberry::Controle>(~controle & 1);
+                std::cout << controle << std::endl;
             }
 
             // Controle Autômato
@@ -86,7 +87,7 @@ int main(int argc, char *argv[])
                 Raspberry::Cor2Flt(frameBuf, frameBufFlt);
 
                 // Realiza o template matching pelas diferentes escalas
-                Raspberry::FindPos findPos[NUM_ESCALAS]{-1.0, Raspberry::CorrelacaoPonto{-1.0, Point(0, 0)}};
+                std::vector<Raspberry::FindPos> findPos(NUM_ESCALAS);
                 
                 #pragma omp parallel for
                 for (auto n = 0; n < NUM_ESCALAS; n++) {
@@ -98,7 +99,8 @@ int main(int argc, char *argv[])
 
                     // Captura somente os pontos encontrados acima do limiar   
                     if (correlacaoPonto.correlacao > THRESHOLD) {
-                        findPos[n] = Raspberry::FindPos {escala*n + ESCALA_MIN, correlacaoPonto};
+                        #pragma omp critical
+                        findPos.push_back(Raspberry::FindPos {escala*n + ESCALA_MIN, correlacaoPonto});
                     }
                 }
 
@@ -121,10 +123,10 @@ int main(int argc, char *argv[])
                     int pos_normalizada = (int) ((maxCorr.ponto.posicao.x - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/100.0)); 
                     
                     if (pos_normalizada > 0) {
-                        velocidades[1] -= (pos_normalizada*pos_normalizada); 
+                        velocidades[1] -= pos_normalizada; 
                     }
                     else {
-                        velocidades[3] -= (pos_normalizada*pos_normalizada);
+                        velocidades[3] += pos_normalizada;
                     }
                     
                     // Desenha um retangulo na posição de maior correlação encontrada
@@ -132,7 +134,6 @@ int main(int argc, char *argv[])
                 }
 
                 client.sendBytes(sizeof(velocidades), (Raspberry::Byte*) velocidades);
-
                 putText(frameBuf, "Seguindo", Point(160, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::red, 1.8);                                
             }
 
@@ -155,3 +156,51 @@ int main(int argc, char *argv[])
     
     return 0;
 }
+
+/*
+#include <opencv2/opencv.hpp>
+
+int main() {
+    // Carregar a imagem
+    cv::Mat img = cv::imread("../quadrado.png");
+    
+    if (img.empty()) {
+        std::cerr << "Erro ao carregar a imagem!" << std::endl;
+        return -1;
+    }
+
+    // Obter as dimensões da imagem
+    int width = img.cols;
+    int height = img.rows;
+
+    // Calcular o centro da imagem
+    cv::Point2f center(width / 2.0f, height / 2.0f);
+
+    // Definir o ângulo de rotação (em graus) e o fator de escala (1.0 significa sem escala)
+    double angle = 45.0; // Ângulo de rotação
+    double scale = 1.0;
+
+    // Criar a matriz de rotação
+    cv::Mat rotMat = cv::getRotationMatrix2D(center, angle, scale);
+
+    // Calcular as dimensões da imagem resultante (para evitar corte após a rotação)
+    cv::Rect bbox = cv::RotatedRect(center, img.size(), angle).boundingRect();
+
+    // Ajustar a matriz de rotação para compensar o deslocamento da imagem
+    rotMat.at<double>(0, 2) += bbox.width / 2.0 - center.x;
+    rotMat.at<double>(1, 2) += bbox.height / 2.0 - center.y;
+
+    // Aplicar a rotação usando warpAffine
+    cv::Mat rotatedImg;
+    cv::warpAffine(img, rotatedImg, rotMat, bbox.size(), cv::INTER_NEAREST, cv::BORDER_CONSTANT, cv::Scalar(255, 255, 255));
+
+    // Exibir as imagens
+    cv::imshow("Imagem Original", img);
+    cv::imshow("Imagem Rotacionada", rotatedImg);
+
+    // Aguardar tecla para fechar as janelas
+    cv::waitKey(0);
+
+    return 0;
+}
+*/

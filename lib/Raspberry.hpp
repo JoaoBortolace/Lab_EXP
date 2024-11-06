@@ -20,7 +20,7 @@
 #define TECLADO_WIDTH           TECLADO_HEIGHT      
 #define BUTTON_WIDTH            80U
 #define BUTTON_HEIGHT           80U
-#define PWM_MAX                 10000
+#define PWM_MAX                 100
 
 using namespace cv;
 
