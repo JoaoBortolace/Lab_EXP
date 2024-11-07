@@ -121,13 +121,13 @@ int main(int argc, char *argv[])
                     velocidades[1] = velocidades[3] = PWM_MAX;
 
                     // Se o ponto encontrado estiver na extrema direita => 10, extrema esquerda => -10, centro => 0
-                    int pos_normalizada = (int) ((maxCorr.ponto.posicao.x - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/(PWM_MAX*10.0))); 
+                    int pos_normalizada = (int) ((maxCorr.ponto.posicao.x - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/ ((double)PWM_MAX))); 
                     
                     if (pos_normalizada > 0) {
-                        velocidades[1] -= (pos_normalizada*pos_normalizada); 
+                        velocidades[1] -= pos_normalizada; 
                     }
                     else {
-                        velocidades[3] -= (pos_normalizada*pos_normalizada);
+                        velocidades[3] += pos_normalizada;
                     }
                     
                     // Desenha um retangulo ao redor da posição de maior correlação encontrada
