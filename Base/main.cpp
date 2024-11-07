@@ -12,7 +12,7 @@
 #define ESCALA_MAX      0.4f 
 #define ESCALA_MIN      0.03f
 #define THRESHOLD       0.65f
-#define NUM_SIZE        280
+#define NUM_SIZE        160
 
 /* -------- Variáveis Globais -------- */
 static Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
@@ -38,8 +38,8 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
 /* -------- Main -------- */
 int main(int argc, char *argv[])
 {
-    if (argc < 5) {
-        Raspberry::erro("Poucos argumentos.");
+    if (argc != 5) {
+        Raspberry::erro("Argumentos errados.");
     }
 
     // Configura a janela aonde será transmitido o vídeo, obtem o template do teclado
@@ -65,17 +65,19 @@ int main(int argc, char *argv[])
     Raspberry::Controle controle = Raspberry::Controle::MANUAL;
 
     // Modelo para reconhecer o número do MNIST
-    torch::jit::script::Module model;
-        
+    torch::jit::script::Module module;
+
     try {
+        // Carrega e deserializa o modelo do ScriptModule
+        module = torch::jit::load(argv[4], torch::Device(torch::kCPU));
+
         // Conecta à Raspberry
         Client client(argv[1], argv[2]);
         client.waitConnection();
 
-        // Carraga o modelo
-        model = torch::jit::load(argv[4]);
-
-        while (true) {            
+        while (true) {
+            auto t1 = Raspberry::timeSinceEpoch();
+            
             // Recebe os quadros e envia o comando
             client.receiveImageCompactada(frameBuf);
             client.sendBytes(sizeof(Raspberry::Comando), (Raspberry::Byte *) &comando);  
@@ -95,7 +97,6 @@ int main(int argc, char *argv[])
                 
                 #pragma omp parallel for
                 for (auto n = 0; n < NUM_ESCALAS; n++) {
-                    // Template matching usando CCOEFF_NORMED
                     Mat_<Raspberry::Flt> correlacao = ImageProcessing::TemplateMatching::matchTemplateSame(frameBufFlt, modelosPreProcessados[n], TM_CCOEFF_NORMED);
 
                     Raspberry::CorrelacaoPonto correlacaoPonto;
@@ -112,14 +113,14 @@ int main(int argc, char *argv[])
                     }
                 }
 
-                // Altera as velocidades dos motores para o carrinho seguir o template
+                // Defini as velocidades dos motores para o carrinho seguir o template
                 int velocidades[4] = {0};
 
                 // Somente se o ponto encontrado está acima do limiar   
                 if (maxCorr.ponto.correlacao > THRESHOLD) {
                     velocidades[1] = velocidades[3] = PWM_MAX;
 
-                    // Se o ponto encontrado estiver na extrema direita => 100, extrema esquerda => -100, centro => 0
+                    // Se o ponto encontrado estiver na extrema direita => 10, extrema esquerda => -10, centro => 0
                     int pos_normalizada = (int) ((maxCorr.ponto.posicao.x - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/(PWM_MAX*10.0))); 
                     
                     if (pos_normalizada > 0) {
@@ -129,17 +130,19 @@ int main(int argc, char *argv[])
                         velocidades[3] -= (pos_normalizada*pos_normalizada);
                     }
                     
-                    // Desenha um retangulo na posição de maior correlação encontrada
+                    // Desenha um retangulo ao redor da posição de maior correlação encontrada
                     ImageProcessing::ploteRetangulo(frameBuf, maxCorr.ponto.posicao, maxCorr.escala*templateSize);
 
-                    // Captura o número do MNIST no modelo encontrado
+                    // Captura o número de dentro do modelo encontrado
                     Mat_<Raspberry::Flt> numEncontrado = MNIST::getMNIST(frameBufFlt, maxCorr.ponto.posicao, maxCorr.escala*NUM_SIZE);
                     
-                    // // Realiza a predição do numero encontrado
-                    int numero = MNIST::inferenciaMNIST(numEncontrado, model);
+                    // Realiza a predição do numero encontrado
+                    int numero = MNIST::inferenciaMNIST(numEncontrado, module);
                     
-                    // // Adiciona o número predito
-                    putText(frameBuf, std::to_string(numero), Point(20, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::grey, 1.2); 
+                    imshow("encontrado", numEncontrado);
+                    
+                    // Adiciona o número predito
+                    putText(frameBuf, std::to_string(numero), Point(20, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::blue03, 1.2); 
                 }
 
                 // Envias o comando com os valores dos PWMs dos motores
@@ -157,6 +160,9 @@ int main(int argc, char *argv[])
             if (waitKey(1)  == 27) { // Esc
                 break;
             }
+
+            auto t2 = Raspberry::timeSinceEpoch();
+            std::cout << "\r" << 1.0/(t2 - t1) << " FPS" << std::flush;
         }
     }
     catch (const std::exception& e) {

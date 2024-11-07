@@ -14,6 +14,7 @@
 
 #ifdef BASE
 #include <torch/script.h>
+#include <memory>
 #endif
 
 #ifdef RASP
@@ -595,23 +596,25 @@ namespace MNIST
 
         // Recorte da imagem usando as coordenadas calculadas
         Rect region(a.x, a.y, b.x - a.x, b.y - a.y); // Definir a região do recorte
-        
         Mat_<Raspberry::Flt> mnist_num = imagem(region);  
-        mnist_num.resize(MNIST_SIZE, MNIST_SIZE);
-
+        
+        // Redimendiona a imagem, inverte saturando
+        resize(mnist_num, mnist_num, Size(MNIST_SIZE, MNIST_SIZE), INTER_LINEAR);        
+        threshold(mnist_num, mnist_num, 0.4, 1.0, THRESH_BINARY_INV);
+        
         return mnist_num;
     }
 
     /*
      * Realiza a inferência do MNIST passado
      */
-    inline int inferenciaMNIST(Mat_<Raspberry::Flt>& imagem, torch::jit::script::Module& modelo)
+    inline int inferenciaMNIST(Mat_<Raspberry::Flt>& imagem, torch::jit::script::Module& module)
     {
         // Converte o tipo para poder inserir no modelo
-        torch::Tensor numEncontradoTensor = torch::from_blob(imagem.data, {MNIST_SIZE, MNIST_SIZE, 1}, torch::kFloat32);
+        torch::jit::IValue numEncontradoTensor = torch::from_blob(imagem.data, {1, 1, MNIST_SIZE, MNIST_SIZE}, torch::kFloat);
 
         // Executar o modelo
-        torch::Tensor outputTensor = modelo.forward({numEncontradoTensor}).toTensor();
+        torch::Tensor outputTensor = module.forward({numEncontradoTensor}).toTensor();
 
         // Obtem o numero predito
         return outputTensor.argmax(1).item<int>();

@@ -49,7 +49,7 @@ if(NOT OpenMP_FOUND)
 endif()
 
 # Encontre o pacote PyTorch
-set(CMAKE_PREFIX_PATH "$ENV{HOME}/libtorch") # Caminho para biblioteca do PyTorch
+set(CMAKE_PREFIX_PATH ${LIB_DIR}/libtorch) # Caminho para biblioteca do PyTorch
 find_package(Torch REQUIRED)
 
 if(NOT Torch_FOUND)
@@ -67,11 +67,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 add_executable(${ProjectName} main.cpp ${programa})
 
 # Adiciona as bibliotecas necessárias ao projeto
-target_link_libraries(${ProjectName} PUBLIC OpenMP::OpenMP_CXX ${OpenCV_LIBS})
-target_link_libraries(${ProjectName} PRIVATE ${TORCH_LIBRARIES})
+target_link_libraries(${ProjectName} PUBLIC OpenMP::OpenMP_CXX ${OpenCV_LIBS} ${TORCH_LIBRARIES})
 
 # Define flags para o OpenMP
 target_compile_options(${ProjectName} PUBLIC ${OpenMP_CXX_FLAGS})
 target_link_options(${ProjectName} PUBLIC ${OpenMP_CXX_FLAGS})
-
-set_property(TARGET ${ProjectName} PROPERTY CXX_STANDARD 14)
