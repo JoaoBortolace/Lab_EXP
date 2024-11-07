@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
         Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
         Raspberry::Controle controle = Raspberry::Controle::MANUAL;
 
-        Raspberry::motorInitPwm();
+        Raspberry::Motores::motorInitPwm();
 
         // Inicia a camera e configura a camera
         VideoCapture camera(CAMERA_VIDEO);

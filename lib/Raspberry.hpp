@@ -600,7 +600,7 @@ namespace MNIST
         
         // Redimendiona a imagem, inverte saturando
         resize(mnist_num, mnist_num, Size(MNIST_SIZE, MNIST_SIZE), INTER_LINEAR);        
-        threshold(mnist_num, mnist_num, 0.4, 1.0, THRESH_BINARY_INV);
+        threshold(mnist_num, mnist_num, 0.6, 1.0, THRESH_BINARY_INV);
         
         return mnist_num;
     }
