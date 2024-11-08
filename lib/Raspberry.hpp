@@ -660,10 +660,16 @@ namespace MNIST
         Rect region(a.x, a.y, b.x - a.x, b.y - a.y); // Definir a região do recorte
         Mat_<Raspberry::Flt> mnist_num = imagem(region);  
         
-        // Redimendiona a imagem, inverte saturando
-        resize(mnist_num, mnist_num, Size(MNIST_SIZE, MNIST_SIZE), INTER_LINEAR);        
-        threshold(mnist_num, mnist_num, 0.5, 1.0, THRESH_BINARY_INV);
+        // Redimendiona a imagem para o tamanho das imagens MNIST
+        resize(mnist_num, mnist_num, Size(MNIST_SIZE, MNIST_SIZE), INTER_LINEAR);    
         
+        Mat mnist_int;
+        mnist_num.convertTo(mnist_int, CV_8UC1, 255.0);    
+        
+        // Satura os pixeis de forma inteligente, isso torna o reconhecimento mais resistente a variações no brilho.
+        adaptiveThreshold(mnist_int, mnist_int, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY_INV, 11, 2.2);        
+        
+        mnist_int.convertTo(mnist_num, CV_32F, 1.0 / 255.0);
         return mnist_num;
     }
 
@@ -675,10 +681,9 @@ namespace MNIST
         // Converte o tipo para poder inserir no modelo
         torch::jit::IValue numEncontradoTensor = torch::from_blob(imagem.data, {1, 1, MNIST_SIZE, MNIST_SIZE}, torch::kFloat);
 
-        // Executar o modelo
         torch::Tensor outputTensor = module.forward({numEncontradoTensor}).toTensor();
 
-        // Obtem o numero predito
+        // Obtém o numero predito
         return outputTensor.argmax(1).item<int>();
     }
 

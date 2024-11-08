@@ -9,7 +9,7 @@
 
 /* -------- Defines -------- */
 #define TEMPLATE_SIZE   401
-#define NUM_SIZE        160
+#define NUM_SIZE        150
 
 #define NUM_ESCALAS     20
 #define ESCALA_MAX      0.4f 
@@ -39,12 +39,13 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
         
         // Alterna entre o controle manual ou automático
         if (comando == Raspberry::Comando::ALTERNA_MODO) {
-            controle = static_cast<Raspberry::Controle>(~controle);
+            controle = static_cast<Raspberry::Controle>(~controle & 1);
         }
     }
     else if (event == EVENT_LBUTTONUP) {
         Raspberry::limpaTeclado(teclado, comando);
         comando = Raspberry::Comando::NAO_SELECIONADO;
+        memset(velocidadesPWM, 0, sizeof(velocidadesPWM));
     }
 }
 
@@ -98,7 +99,7 @@ int main(int argc, char *argv[])
                     Raspberry::CorrelacaoPonto correlacaoPonto;
                     minMaxLoc(correlacao, NULL, &correlacaoPonto.correlacao, NULL, &correlacaoPonto.posicao);
                     
-                    findPos[n] = Raspberry::FindPos{TEMPLATE_SIZE*n + ESCALA_MIN, correlacaoPonto};
+                    findPos[n] = Raspberry::FindPos{ESCALA*n + ESCALA_MIN, correlacaoPonto};
                 }
 
                 Raspberry::FindPos maxCorr = findPos[0];
@@ -127,7 +128,8 @@ int main(int argc, char *argv[])
 
                     // Captura o número de dentro do modelo encontrado
                     Mat_<Raspberry::Flt> numEncontrado = MNIST::getMNIST(frameBufFlt, maxCorr.ponto.posicao, maxCorr.escala*NUM_SIZE);
-                    
+                    imshow("encontrado", numEncontrado);
+
                     // Realiza a predição do numero encontrado
                     int numero = MNIST::inferenciaMNIST(numEncontrado, module);
                                         
