@@ -283,14 +283,12 @@ namespace Raspberry
             softPwmWrite(M1_B, 0);
             softPwmWrite(M2_A, 0);
             softPwmWrite(M2_B, 0);
+            std::chrono::sleep_for((1));
+
             softPwmStop(M1_A);
             softPwmStop(M1_B);
             softPwmStop(M2_A);
             softPwmStop(M2_B);
-            digitalWrite(M1_A, LOW);
-            digitalWrite(M1_B, LOW);
-            digitalWrite(M2_A, LOW);
-            digitalWrite(M2_B, LOW);
         }
     } // namespace Motores
     #endif
@@ -451,6 +449,71 @@ namespace Raspberry
                 break;
             default:
                 comando = Comando::NAO_SELECIONADO;
+                break;
+        }
+    }
+
+    /*
+     * Retorna os valores dos PWMs para o comando passado
+     */
+    inline void getVelocidades(Comando comando, int velocidade, int velocidadesPWM[]) 
+    {
+        switch (comando) {
+            case FRENTE:
+                velocidadesPWM[0] = 0;
+                velocidadesPWM[1] = velocidade;
+                velocidadesPWM[2] = 0;
+                velocidadesPWM[3] = velocidade;
+                break;
+            case ATRAS:
+                velocidadesPWM[0] = velocidade;
+                velocidadesPWM[1] = 0;
+                velocidadesPWM[2] = velocidade;
+                velocidadesPWM[3] = 0;
+                break;
+            case DIAGONAL_FRENTE_DIREITA:
+                velocidadesPWM[0] = 0;
+                velocidadesPWM[1] = 0;
+                velocidadesPWM[2] = 0;
+                velocidadesPWM[3] = velocidade;
+                break;
+            case DIAGONAL_FRENTE_ESQUERDA:
+                velocidadesPWM[0] = 0;
+                velocidadesPWM[1] = velocidade;
+                velocidadesPWM[2] = 0;
+                velocidadesPWM[3] = 0;
+                break;
+            case DIAGONAL_ATRAS_DIREITA:
+                velocidadesPWM[0] = 0;
+                velocidadesPWM[1] = 0;
+                velocidadesPWM[2] = velocidade;
+                velocidadesPWM[3] = 0;
+                break;
+            case DIAGONAL_ATRAS_ESQUERDA:
+                velocidadesPWM[0] = velocidade;
+                velocidadesPWM[1] = 0;
+                velocidadesPWM[2] = 0;
+                velocidadesPWM[3] = 0;
+                break;
+            case GIRA_ESQUERDA:
+                velocidadesPWM[0] = 0;
+                velocidadesPWM[1] = velocidade;
+                velocidadesPWM[2] = velocidade;
+                velocidadesPWM[3] = 0;
+                break;
+            case GIRA_DIREITA:
+                velocidadesPWM[0] = velocidade;
+                velocidadesPWM[1] = 0;
+                velocidadesPWM[2] = 0;
+                velocidadesPWM[3] = velocidade;
+                break;
+            case ALTERNA_MODO:            
+            case NAO_SELECIONADO:
+            default:
+                velocidadesPWM[0] = 0;
+                velocidadesPWM[1] = 0;
+                velocidadesPWM[2] = 0;
+                velocidadesPWM[3] = 0;
                 break;
         }
     }
