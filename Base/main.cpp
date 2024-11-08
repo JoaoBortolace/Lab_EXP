@@ -9,7 +9,6 @@
 
 /* -------- Defines -------- */
 #define TEMPLATE_SIZE   401
-#define TEMPLATE_PATH   "../quadrado.png"
 #define NUM_SIZE        160
 
 #define NUM_ESCALAS     20
@@ -17,8 +16,6 @@
 #define ESCALA_MIN      0.03f
 #define ESCALA          ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS)
 #define THRESHOLD       0.65f
-
-#define MODULE_PATH     "../lenet5_model.pt"
 
 /* -------- Variáveis Globais -------- */
 static Raspberry::Controle controle = Raspberry::Controle::MANUAL;
@@ -54,7 +51,7 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
 /* -------- Main -------- */
 int main(int argc, char *argv[])
 {
-    if (argc != 3) {
+    if (argc != 5) {
         Raspberry::erro("Argumentos errados.");
     }
 
@@ -68,7 +65,7 @@ int main(int argc, char *argv[])
 
     // Obtem o modelo a ser buscado, para conseguir detectar-lo em diferentes distâncias, é nescessário diferêntes escalas dele
     Mat_<Raspberry::Flt> modelo;
-    ImageProcessing::Cor2Flt(imread(TEMPLATE_PATH, 1), modelo);
+    ImageProcessing::Cor2Flt(imread(argv[4], 1), modelo);
 
     Mat_<Raspberry::Flt> modelosPreProcessados[NUM_ESCALAS];
     ImageProcessing::TemplateMatching::getModeloPreProcessados(modelo, modelosPreProcessados, NUM_ESCALAS, ESCALA, ESCALA_MIN);
@@ -77,7 +74,7 @@ int main(int argc, char *argv[])
     torch::jit::script::Module module;
 
     try {
-        module = torch::jit::load(MODULE_PATH, torch::Device(torch::kCPU));
+        module = torch::jit::load(argv[3], torch::Device(torch::kCPU));
 
         // Conecta à Raspberry
         Client client(argv[1], argv[2]);

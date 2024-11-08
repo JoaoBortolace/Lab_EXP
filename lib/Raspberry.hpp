@@ -283,7 +283,6 @@ namespace Raspberry
             softPwmWrite(M1_B, 0);
             softPwmWrite(M2_A, 0);
             softPwmWrite(M2_B, 0);
-            std::chrono::sleep_for((1));
 
             softPwmStop(M1_A);
             softPwmStop(M1_B);

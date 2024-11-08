@@ -29,7 +29,6 @@ int main(int argc, char *argv[])
         server.waitConnection();
        
         // Controle dos Motores
-        Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
         Raspberry::Motores::motorInitPwm();
         int velocidades[4] = {0};
 
