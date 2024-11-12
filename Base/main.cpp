@@ -76,7 +76,12 @@ int main(int argc, char *argv[])
 
     try {
         module = torch::jit::load(argv[3], torch::Device(torch::kCPU));
-
+        
+        // Certifica que o modelo está no modo de inferência
+        //module = torch::jit::optimize_for_inference(module);
+        torch::NoGradGuard no_grad;
+        module.eval();
+        
         // Conecta à Raspberry
         Client client(argv[1], argv[2]);
         client.waitConnection();

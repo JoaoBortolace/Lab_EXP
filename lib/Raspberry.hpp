@@ -665,9 +665,9 @@ namespace MNIST
         
         Mat mnist_int;
         mnist_num.convertTo(mnist_int, CV_8UC1, 255.0);    
-        
+
         // Satura os pixeis de forma inteligente, isso torna o reconhecimento mais resistente a variações no brilho.
-        adaptiveThreshold(mnist_int, mnist_int, 255, ADAPTIVE_THRESH_MEAN_C, THRESH_BINARY_INV, 11, 2.2);        
+        adaptiveThreshold(mnist_int, mnist_int, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY_INV, 9, 2);        
         
         mnist_int.convertTo(mnist_num, CV_32F, 1.0 / 255.0);
         return mnist_num;
