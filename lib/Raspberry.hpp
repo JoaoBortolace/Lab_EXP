@@ -689,6 +689,136 @@ namespace MNIST
 
 } // namespace MNIST
 
+namespace ControleAutomatico
+{
+    typedef enum
+    {
+        BUSCA_TEMPLATE,
+        APROXIMA_TEMPLATE,
+        EXECUTA_TEMPLATE,
+    } ControleEstados;
+
+    inline void getVelocidadesAutomatico(ControleAutomatico::ControleEstados controleEstado, int predito, int posicaoX, int velocidade, int velocidadesPWM[])
+    {
+        int pos_normalizada;
+        
+        switch (controleEstado) {
+            case ControleEstados::BUSCA_TEMPLATE:
+                velocidadesPWM[0] = 0;
+                velocidadesPWM[1] = velocidade;
+                velocidadesPWM[2] = 0;
+                velocidadesPWM[3] = velocidade;
+                break;
+
+            case ControleEstados::APROXIMA_TEMPLATE:
+                velocidadesPWM[0] = velocidadesPWM[4] = 0;
+                velocidadesPWM[1] = velocidadesPWM[3] = velocidade;
+                
+                pos_normalizada = (int)((posicaoX - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/ ((double)velocidade)));
+                
+                if (pos_normalizada > 0) {
+                    velocidadesPWM[1] -= pos_normalizada; 
+                }
+                else {
+                    velocidadesPWM[3] += pos_normalizada;
+                }
+                break;
+
+            case ControleEstados::EXECUTA_TEMPLATE:
+                switch (predito) {
+                    case 0:
+                    case 1:
+                        velocidadesPWM[0] = velocidadesPWM[1] = velocidadesPWM[3] = velocidadesPWM[4] = 0;
+                        break;
+
+                    case 2:
+                        velocidadesPWM[0] = 0;
+                        velocidadesPWM[1] = velocidade;
+                        velocidadesPWM[2] = velocidade;
+                        velocidadesPWM[3] = 0;
+                        break;
+
+                    case 3:
+                        velocidadesPWM[0] = velocidade;
+                        velocidadesPWM[1] = 0;
+                        velocidadesPWM[2] = 0;
+                        velocidadesPWM[3] = velocidade;
+                        break;
+
+                    case 4:
+                    case 5:
+                        velocidadesPWM[0] = 0;
+                        velocidadesPWM[1] = velocidade;
+                        velocidadesPWM[2] = 0;
+                        velocidadesPWM[3] = velocidade;
+                        break;
+
+                    case 6:
+                    case 7:
+                        velocidadesPWM[0] = 0;
+                        velocidadesPWM[1] = velocidade;
+                        velocidadesPWM[2] = velocidade;
+                        velocidadesPWM[3] = 0;
+                        break;
+
+                    case 8:
+                    case 9:
+                        velocidadesPWM[0] = velocidade;
+                        velocidadesPWM[1] = 0;
+                        velocidadesPWM[2] = 0;
+                        velocidadesPWM[3] = velocidade;
+                        break;
+
+                    default:
+                        velocidadesPWM[0] = velocidadesPWM[1] = velocidadesPWM[3] = velocidadesPWM[4] = 0;
+                        break;
+                }
+                break;
+
+            default:
+                // Valor desconhecido ou não tratado
+                std::cerr << "Estado não tratado: " << static_cast<int>(controleEstado) << std::endl;
+                velocidadesPWM[0] = velocidadesPWM[1] = velocidadesPWM[3] = velocidadesPWM[4] = 0;
+                break;
+        }
+    }
+
+
+    void modoAutomatico(std::atomic<ControleEstados>& controleEstado, std::atomic<bool>& templateEncontrado, std::atomic<bool>& templateEnquadrado)
+    {
+        while (true) {
+            switch (controleEstado)
+            {
+                case ControleEstados::BUSCA_TEMPLATE:
+                    if (templateEncontrado) {
+                        controleEstado = ControleEstados::APROXIMA_TEMPLATE;
+                    }
+                    else {
+                        controleEstado = ControleEstados::BUSCA_TEMPLATE;
+                    }
+                    break;
+
+                case ControleEstados::APROXIMA_TEMPLATE:
+                    if (templateEncontrado && templateEnquadrado) {
+                        controleEstado = ControleEstados::EXECUTA_TEMPLATE;
+                    }
+                    else {
+                        controleEstado = ControleEstados::APROXIMA_TEMPLATE;
+                    }
+                    break;
+
+                case ControleEstados::EXECUTA_TEMPLATE:
+                    /* code */
+                    break;
+
+                default:
+                    controleEstado = ControleEstados::BUSCA_TEMPLATE;
+                    break;
+            }
+        }
+    }
+} // namespace ControleAutomatico
+
 #endif // Base
 
 #endif  // RASPBERRY_HPP
