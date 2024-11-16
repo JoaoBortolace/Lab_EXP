@@ -63,7 +63,7 @@ namespace Raspberry
 
     typedef enum
     {
-        AUTOMATO = 0,
+        AUTOMATICO = 0,
         MANUAL,
     } Controle;
 
@@ -455,56 +455,56 @@ namespace Raspberry
     /*
      * Retorna os valores dos PWMs para o comando passado
      */
-    inline void getVelocidades(Comando comando, int velocidade, int velocidadesPWM[]) 
+    inline void getVelocidades(Comando comando, int velocidadesPWM[]) 
     {
         switch (comando) {
             case FRENTE:
                 velocidadesPWM[0] = 0;
-                velocidadesPWM[1] = velocidade;
+                velocidadesPWM[1] = PWM_MAX;
                 velocidadesPWM[2] = 0;
-                velocidadesPWM[3] = velocidade;
+                velocidadesPWM[3] = PWM_MAX;
                 break;
             case ATRAS:
-                velocidadesPWM[0] = velocidade;
+                velocidadesPWM[0] = PWM_MAX;
                 velocidadesPWM[1] = 0;
-                velocidadesPWM[2] = velocidade;
+                velocidadesPWM[2] = PWM_MAX;
                 velocidadesPWM[3] = 0;
                 break;
             case DIAGONAL_FRENTE_DIREITA:
                 velocidadesPWM[0] = 0;
                 velocidadesPWM[1] = 0;
                 velocidadesPWM[2] = 0;
-                velocidadesPWM[3] = velocidade;
+                velocidadesPWM[3] = PWM_MAX;
                 break;
             case DIAGONAL_FRENTE_ESQUERDA:
                 velocidadesPWM[0] = 0;
-                velocidadesPWM[1] = velocidade;
+                velocidadesPWM[1] = PWM_MAX;
                 velocidadesPWM[2] = 0;
                 velocidadesPWM[3] = 0;
                 break;
             case DIAGONAL_ATRAS_DIREITA:
                 velocidadesPWM[0] = 0;
                 velocidadesPWM[1] = 0;
-                velocidadesPWM[2] = velocidade;
+                velocidadesPWM[2] = PWM_MAX;
                 velocidadesPWM[3] = 0;
                 break;
             case DIAGONAL_ATRAS_ESQUERDA:
-                velocidadesPWM[0] = velocidade;
+                velocidadesPWM[0] = PWM_MAX;
                 velocidadesPWM[1] = 0;
                 velocidadesPWM[2] = 0;
                 velocidadesPWM[3] = 0;
                 break;
             case GIRA_ESQUERDA:
                 velocidadesPWM[0] = 0;
-                velocidadesPWM[1] = velocidade;
-                velocidadesPWM[2] = velocidade;
+                velocidadesPWM[1] = PWM_MAX;
+                velocidadesPWM[2] = PWM_MAX;
                 velocidadesPWM[3] = 0;
                 break;
             case GIRA_DIREITA:
-                velocidadesPWM[0] = velocidade;
+                velocidadesPWM[0] = PWM_MAX;
                 velocidadesPWM[1] = 0;
                 velocidadesPWM[2] = 0;
-                velocidadesPWM[3] = velocidade;
+                velocidadesPWM[3] = PWM_MAX;
                 break;
             case ALTERNA_MODO:            
             case NAO_SELECIONADO:
@@ -676,7 +676,7 @@ namespace MNIST
     /*
      * Realiza a inferência do MNIST passado
      */
-    inline int inferenciaMNIST(Mat_<Raspberry::Flt>& imagem, torch::jit::script::Module& module)
+    inline int inferencia(Mat_<Raspberry::Flt>& imagem, torch::jit::script::Module& module)
     {
         // Converte o tipo para poder inserir no modelo
         torch::jit::IValue numEncontradoTensor = torch::from_blob(imagem.data, {1, 1, MNIST_SIZE, MNIST_SIZE}, torch::kFloat);
@@ -691,133 +691,167 @@ namespace MNIST
 
 namespace ControleAutomatico
 {
-    typedef enum
+    typedef enum 
     {
-        BUSCA_TEMPLATE,
-        APROXIMA_TEMPLATE,
-        EXECUTA_TEMPLATE,
-    } ControleEstados;
+        BUSCA = 0,
+        APROXIMA,
+        FOCA,
+        IDENTIFICA,
+        EXECUTA_PARA,
+        EXECUTA_FRENTE,
+        EXECUTA_180_ESQUERDA,
+        EXECUTA_180_DIREITA,
+        EXECUTA_90_ESQUERDA,
+        EXECUTA_90_DIREITA,
+        FINALIZA,
+    } Estados;
 
-    inline void getVelocidadesAutomatico(ControleAutomatico::ControleEstados controleEstado, int predito, int posicaoX, int velocidade, int velocidadesPWM[])
+    /*
+     * Função responsável por atualizar o estados da Máquina de estados do controle automático
+     */
+    inline void atualizaMEF(Estados& controleEstado, bool encontrado, bool enquadrado, int numPredito)
     {
-        int pos_normalizada;
-        
+        static double timer = 0.0;
+
         switch (controleEstado) {
-            case ControleEstados::BUSCA_TEMPLATE:
-                velocidadesPWM[0] = 0;
-                velocidadesPWM[1] = velocidade;
-                velocidadesPWM[2] = 0;
-                velocidadesPWM[3] = velocidade;
+            case Estados::BUSCA:
+                if (encontrado == true) {
+                    controleEstado = Estados::APROXIMA;
+                }
                 break;
 
-            case ControleEstados::APROXIMA_TEMPLATE:
-                velocidadesPWM[0] = velocidadesPWM[4] = 0;
-                velocidadesPWM[1] = velocidadesPWM[3] = velocidade;
+            case Estados::APROXIMA:
+                if (enquadrado == true) {
+                    controleEstado = Estados::FOCA;
+                    timer = Raspberry::timeSinceEpoch();
+                }
+                break;
+
+            case Estados::FOCA:
+                if (Raspberry::timeSinceEpoch() - timer > 1.5) {
+                    controleEstado = Estados::IDENTIFICA;
+                }
+                break;
+
+            case Estados::IDENTIFICA:
+                std::cout << numPredito << std::endl;
+                switch (numPredito) {
+                    case 0:
+                    case 1:
+                        controleEstado = Estados::EXECUTA_PARA;
+                        break;
+                    case 2:
+                        controleEstado = Estados::EXECUTA_180_ESQUERDA;
+                        break;
+                    case 3:
+                        controleEstado = Estados::EXECUTA_180_DIREITA;
+                        break;
+                    case 4:
+                    case 5:
+                        controleEstado = Estados::EXECUTA_FRENTE;
+                        break;
+                    case 6:
+                    case 7:
+                        controleEstado = Estados::EXECUTA_90_ESQUERDA;
+                        break;
+                    case 8:
+                    case 9:
+                        controleEstado = Estados::EXECUTA_90_DIREITA;
+                        break;
+                    default:
+                        controleEstado = Estados::IDENTIFICA;
+                        break;
+
+                    // Dispara o timer para cronometra o tempo de manobra
+                    timer = Raspberry::timeSinceEpoch();
+                }
+                break;
+
+            case Estados::EXECUTA_PARA:
+            case Estados::EXECUTA_FRENTE:
+            case Estados::EXECUTA_180_ESQUERDA:
+            case Estados::EXECUTA_180_DIREITA:
+                if (Raspberry::timeSinceEpoch() - timer > 2.3) {
+                    controleEstado = Estados::FINALIZA;
+                    timer = Raspberry::timeSinceEpoch();
+                }
+                break;
+
+            case Estados::EXECUTA_90_ESQUERDA:
+            case Estados::EXECUTA_90_DIREITA:
+                if (Raspberry::timeSinceEpoch() - timer > 1.9) {
+                    controleEstado = Estados::FINALIZA;
+                    timer = Raspberry::timeSinceEpoch();
+                }
+                break;
+
+            case Estados::FINALIZA:
+                if (Raspberry::timeSinceEpoch() - timer > 1.0) {
+                    controleEstado = Estados::BUSCA;
+                }
+                break;
+            
+            default:
+                controleEstado = Estados::BUSCA;
+                break;
+        }
+    }
+
+    /*
+     * Retorna os valores dos PWMs para o determinado estado
+     */
+    inline void getVelocidades(Estados controleEstado, int velocidadesPWM[], int posicaoX)
+    {
+        switch (controleEstado)
+        {
+            case Estados::BUSCA:
+            case Estados::EXECUTA_FRENTE:
+                velocidadesPWM[0] = velocidadesPWM[2] = 0;
+                velocidadesPWM[1] = velocidadesPWM[3] = PWM_MAX;
+                break;
+
+            case Estados::APROXIMA:
+                velocidadesPWM[0] = velocidadesPWM[2] = 0;
+                velocidadesPWM[1] = velocidadesPWM[3] = PWM_MAX;
                 
-                pos_normalizada = (int)((posicaoX - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/ ((double)velocidade)));
+                int pos_normalizada;
+                pos_normalizada = (int) ((posicaoX - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/ ((double)PWM_MAX))); 
                 
                 if (pos_normalizada > 0) {
                     velocidadesPWM[1] -= pos_normalizada; 
                 }
                 else {
-                    velocidadesPWM[3] += pos_normalizada;
+                    velocidadesPWM[3] += pos_normalizada; 
+
                 }
                 break;
-
-            case ControleEstados::EXECUTA_TEMPLATE:
-                switch (predito) {
-                    case 0:
-                    case 1:
-                        velocidadesPWM[0] = velocidadesPWM[1] = velocidadesPWM[3] = velocidadesPWM[4] = 0;
-                        break;
-
-                    case 2:
-                        velocidadesPWM[0] = 0;
-                        velocidadesPWM[1] = velocidade;
-                        velocidadesPWM[2] = velocidade;
-                        velocidadesPWM[3] = 0;
-                        break;
-
-                    case 3:
-                        velocidadesPWM[0] = velocidade;
-                        velocidadesPWM[1] = 0;
-                        velocidadesPWM[2] = 0;
-                        velocidadesPWM[3] = velocidade;
-                        break;
-
-                    case 4:
-                    case 5:
-                        velocidadesPWM[0] = 0;
-                        velocidadesPWM[1] = velocidade;
-                        velocidadesPWM[2] = 0;
-                        velocidadesPWM[3] = velocidade;
-                        break;
-
-                    case 6:
-                    case 7:
-                        velocidadesPWM[0] = 0;
-                        velocidadesPWM[1] = velocidade;
-                        velocidadesPWM[2] = velocidade;
-                        velocidadesPWM[3] = 0;
-                        break;
-
-                    case 8:
-                    case 9:
-                        velocidadesPWM[0] = velocidade;
-                        velocidadesPWM[1] = 0;
-                        velocidadesPWM[2] = 0;
-                        velocidadesPWM[3] = velocidade;
-                        break;
-
-                    default:
-                        velocidadesPWM[0] = velocidadesPWM[1] = velocidadesPWM[3] = velocidadesPWM[4] = 0;
-                        break;
-                }
+            
+            case Estados::EXECUTA_180_ESQUERDA:
+            case Estados::EXECUTA_90_ESQUERDA:
+                velocidadesPWM[0] = velocidadesPWM[3] = 0;
+                velocidadesPWM[1] = velocidadesPWM[2] = PWM_MAX;
                 break;
 
+            case Estados::EXECUTA_180_DIREITA:
+            case Estados::EXECUTA_90_DIREITA:
+                velocidadesPWM[1] = velocidadesPWM[2] = 0;
+                velocidadesPWM[0] = velocidadesPWM[3] = PWM_MAX;
+                break;
+
+            case Estados::FOCA:
+            case Estados::EXECUTA_PARA:
+            case Estados::FINALIZA:
+            case Estados::IDENTIFICA:
             default:
-                // Valor desconhecido ou não tratado
-                std::cerr << "Estado não tratado: " << static_cast<int>(controleEstado) << std::endl;
-                velocidadesPWM[0] = velocidadesPWM[1] = velocidadesPWM[3] = velocidadesPWM[4] = 0;
+                velocidadesPWM[0] = 0;
+                velocidadesPWM[1] = 0;
+                velocidadesPWM[2] = 0;
+                velocidadesPWM[3] = 0;
                 break;
-        }
-    }
-
-
-    void modoAutomatico(std::atomic<ControleEstados>& controleEstado, std::atomic<bool>& templateEncontrado, std::atomic<bool>& templateEnquadrado)
-    {
-        while (true) {
-            switch (controleEstado)
-            {
-                case ControleEstados::BUSCA_TEMPLATE:
-                    if (templateEncontrado) {
-                        controleEstado = ControleEstados::APROXIMA_TEMPLATE;
-                    }
-                    else {
-                        controleEstado = ControleEstados::BUSCA_TEMPLATE;
-                    }
-                    break;
-
-                case ControleEstados::APROXIMA_TEMPLATE:
-                    if (templateEncontrado && templateEnquadrado) {
-                        controleEstado = ControleEstados::EXECUTA_TEMPLATE;
-                    }
-                    else {
-                        controleEstado = ControleEstados::APROXIMA_TEMPLATE;
-                    }
-                    break;
-
-                case ControleEstados::EXECUTA_TEMPLATE:
-                    /* code */
-                    break;
-
-                default:
-                    controleEstado = ControleEstados::BUSCA_TEMPLATE;
-                    break;
-            }
         }
     }
 } // namespace ControleAutomatico
+
 
 #endif // Base
 
