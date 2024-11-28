@@ -22,8 +22,7 @@
 /* -------- Variáveis Globais -------- */
 static Mat_<Raspberry::Cor> teclado;
 static Raspberry::Controle controle = Raspberry::Controle::MANUAL;
-static Raspberry::Comando comandoManual = Raspberry::Comando::NAO_SELECIONADO;
-static int velocidadesPWM[4] = {0};
+static Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
 
 /* -------- Callbacks -------- */
 void mouse_callback(int event, int x, int y, int flags, void *usedata)
@@ -36,18 +35,16 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
         uint32_t row = y / BUTTON_HEIGHT;
         
         // Obtem qual comando foi pressionado, e qual deve ser os valores dos PWMs
-        Raspberry::getComando(col, row, teclado, comandoManual);
-        Raspberry::getVelocidades(comandoManual, velocidadesPWM);
+        Raspberry::getComando(col, row, teclado, comando);
         
         // Alterna entre o controle manual ou automático
-        if (comandoManual == Raspberry::Comando::ALTERNA_MODO) {
+        if (comando == Raspberry::Comando::ALTERNA_MODO) {
             controle = static_cast<Raspberry::Controle>(~controle & 1);
         }
     }
     else if (event == EVENT_LBUTTONUP) {
-        Raspberry::limpaTeclado(teclado, comandoManual);
-        comandoManual = Raspberry::Comando::NAO_SELECIONADO;
-        memset(velocidadesPWM, 0, sizeof(velocidadesPWM));
+        Raspberry::limpaTeclado(teclado, comando);
+        comando = Raspberry::Comando::NAO_SELECIONADO;
     }
 }
 
@@ -67,15 +64,20 @@ int main(int argc, char *argv[])
     setMouseCallback("RaspCam", mouse_callback);
 
     // Obtem o modelo a ser buscado, para conseguir detectar-lo em diferentes distâncias, é nescessário diferêntes escalas dele
+    float escalas[NUM_ESCALAS];
+    for (auto n = 0; n < NUM_ESCALAS; n++) {
+        escalas[n] = ESCALA*n + ESCALA_MIN;
+    }
+    
     Mat_<Raspberry::Flt> modelo;
     ImageProcessing::Cor2Flt(imread(argv[4], 1), modelo);
-
     Mat_<Raspberry::Flt> modelosPreProcessados[NUM_ESCALAS];
-    ImageProcessing::TemplateMatching::getModeloPreProcessados(modelo, modelosPreProcessados, NUM_ESCALAS, ESCALA, ESCALA_MIN);
+    ImageProcessing::TemplateMatching::getModeloPreProcessados(modelo, modelosPreProcessados, NUM_ESCALAS, escalas);
+    Raspberry::FindPos corrBuf[NUM_ESCALAS];
 
     // Variáveis auxliares para o controle automático
     ControleAutomatico::Estados controleEstado = ControleAutomatico::Estados::BUSCA;
-    int numPredito = -1;
+    int numPredito;
 
     // Modelo para reconhecer o número do MNIST
     torch::jit::script::Module module;
@@ -95,36 +97,18 @@ int main(int argc, char *argv[])
 
             // Controle Autômato
             if (controle == Raspberry::Controle::AUTOMATICO) {
-                putText(frameBuf, "Automatico", Point(120, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::red, 1.8);  
+                putText(frameBuf, "Automatico", Point(20, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::red, 1.8);  
 
-                // Realiza o template matching pelas diferentes escalas e captura a maior correlação
                 ImageProcessing::Cor2Flt(frameBuf, frameBufFlt);
 
-                Raspberry::FindPos findPos[NUM_ESCALAS];
-
-                #pragma omp parallel for
-                for (auto n = 0; n < NUM_ESCALAS; n++) {
-                    Mat_<Raspberry::Flt> correlacao = ImageProcessing::TemplateMatching::matchTemplateSame(frameBufFlt, modelosPreProcessados[n], TM_CCOEFF_NORMED);
-
-                    Raspberry::CorrelacaoPonto correlacaoPonto;
-                    minMaxLoc(correlacao, NULL, &correlacaoPonto.correlacao, NULL, &correlacaoPonto.posicao);
-                    
-                    findPos[n] = Raspberry::FindPos{ESCALA*n + ESCALA_MIN, correlacaoPonto};
-                }
-
-                Raspberry::FindPos maxCorr = findPos[0];
-                for (auto i = 1; i < NUM_ESCALAS; i++) {
-                    if (findPos[i].ponto.correlacao > maxCorr.ponto.correlacao) {
-                        maxCorr = findPos[i];
-                    }
-                }
-
-                bool encontrado = false, enquadrado = false;
+                // Obtem o ponto de maior correlação com o modelo
+                Raspberry::FindPos maxCorr = ImageProcessing::TemplateMatching::getMaxCorrelacao(frameBufFlt, modelosPreProcessados, corrBuf, NUM_ESCALAS, escalas);
 
                 // Caso tenha encontrado um template
+                bool encontrado = false, enquadrado = false;
+
                 if (maxCorr.ponto.correlacao > THRESHOLD) { 
                     encontrado = true;
-
                     if (maxCorr.escala > ESCALA_DIST_MIN && maxCorr.ponto.posicao.x > 140 && maxCorr.ponto.posicao.x < 180) {
                         enquadrado = true;
                     } 
@@ -136,16 +120,15 @@ int main(int argc, char *argv[])
                     // Realiza a predição do numero encontrado
                     numPredito = MNIST::inferencia(numEncontrado, module);
                     // Adiciona o número predito ao quadro
-                    putText(frameBuf, std::to_string(numPredito), Point(20, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::blue03, 1.2); 
+                    putText(frameBuf, std::to_string(numPredito), Point(200, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::blue03, 1.2); 
                 } 
-
-                // Processa o próximo estado e obtem o vetor dos valores dos PWMs
-                ControleAutomatico::atualizaMEF(controleEstado, encontrado, enquadrado, numPredito);   
-                ControleAutomatico::getVelocidades(controleEstado, velocidadesPWM, maxCorr.ponto.posicao.x);       
+                
+                // Processa a máquina de estados
+                ControleAutomatico::maquinaEstados(controleEstado, comando, encontrado, enquadrado, numPredito, maxCorr.ponto.posicao.x);   
             } 
             
-            // Envias o comando com os valores dos PWMs dos motores            
-            client.sendBytes(sizeof(velocidadesPWM), (Raspberry::Byte*) velocidadesPWM);
+            // Envias o comando de controle dos motores            
+            client.sendBytes(sizeof(comando), (Raspberry::Byte*) comando);
             
             // Coloca o teclado no quadro
             hconcat(teclado, frameBuf, frameBuf);  

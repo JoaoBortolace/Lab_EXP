@@ -7,6 +7,58 @@
 #include "Raspberry.hpp"
 #include "Server.hpp"
 
+/* -------- Variáveis Globais -------- */
+std::mutex mutex;
+std::condition_variable cv_motor;
+Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
+
+/* -------- Thread de controle dos motores -------- */
+void controleMotor(std::atomic<bool> run)
+{
+    // Inicializa os GPIOs da ponte H
+    Raspberry::Motores::init();
+
+    while(run) {
+        std::unique_lock<std::mutex> lock(mutex);
+
+        // Espera receber um comando
+        cv_motor.wait(lock);
+
+        // Modo manual
+        if (comando < AUTO_PARADO) {
+            Raspberry::Motores::setDir(comando);
+        }
+        else { // Modo automático
+            switch (comando) {
+                case Raspberry::Comando::AUTO_180_ESQUERDA:
+                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(2300));
+                    break;
+                case Raspberry::Comando::AUTO_180_DIREITA:
+                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(2300));
+                    break;
+                case Raspberry::Comando::AUTO_90_ESQUERDA:
+                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+                    break;
+                case Raspberry::Comando::AUTO_90_DIREITA:
+                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+                    break;
+                default:
+                    Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
+                    break;
+            }
+            
+            Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
+        }
+    }
+
+    // Desliga os motores
+    Raspberry::Motores::stop();
+}
+
 /* -------- Main -------- */
 int main(int argc, char *argv[])
 {
@@ -23,35 +75,41 @@ int main(int argc, char *argv[])
     camera.set(CAP_PROP_FRAME_WIDTH, CAMERA_FRAME_WIDTH);
     camera.set(CAP_PROP_FRAME_HEIGHT, CAMERA_FRAME_HEIGHT);
 
+    // Controle dos Motores
+    std::atomic<bool> runMotor = true;
+    std::thread motorThread(controleMotor, std::ref(runMotor));
+
     try {
         // Inicializa o servidor
         Server server(argv[1], 30);
         server.waitConnection();
        
-        // Controle dos Motores
-        Raspberry::Motores::motorInitPwm();
-        int velocidades[4] = {0};
-
         // Para armazenar as imagens que serão transmitidas
         Mat_<Raspberry::Cor> frameBuf;
 
-        // Transmite os quadros
         while(true) {
+            // Transmite os quadros
             camera.read(frameBuf);
             server.sendImageCompactada(frameBuf);
 
-            // Recebe e aplica os valores de velocidades dos PWMs
-            server.receiveBytes(sizeof(velocidades), (Raspberry::Byte *) &velocidades);
+            // Recebe o comando de ação
+            {
+                std::unique_lock<std::mutex> lock(mutex);
+                server.receiveBytes(sizeof(comando), (Raspberry::Byte *) &comando);
+            }
 
-            Raspberry::Motores::motorSetVel(velocidades);
+            // Acorda a thread para executar o comando
+            cv_motor.notify_one();            
         }
     }
     catch (const std::exception& e) {
-        Raspberry::erro(e.what());
+        Raspberry::print(e.what());
     }
 
-    // Desliga os motores
-    Raspberry::Motores::motorStop();
+    // Para a thread dos motores
+    runMotor = false;
+    cv_motor.notify_one();
+    motorThread.join();
     
     return 0;
 }
