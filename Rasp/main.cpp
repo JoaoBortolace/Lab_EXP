@@ -13,7 +13,7 @@ std::condition_variable cv_motor;
 Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
 
 /* -------- Thread de controle dos motores -------- */
-void controleMotor(std::atomic<bool> run)
+void controleMotor(std::atomic<bool>& run)
 {
     // Inicializa os GPIOs da ponte H
     Raspberry::Motores::init();
@@ -25,7 +25,7 @@ void controleMotor(std::atomic<bool> run)
         cv_motor.wait(lock);
 
         // Modo manual
-        if (comando < AUTO_PARADO) {
+        if (comando < Raspberry::Comando::AUTO_PARADO) {
             Raspberry::Motores::setDir(comando);
         }
         else { // Modo automático
