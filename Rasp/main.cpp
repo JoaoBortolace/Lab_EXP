@@ -31,29 +31,28 @@ void controleMotor(std::atomic<bool>& run)
             Raspberry::Motores::setDir(comando);
         }
         else { // Modo automático
+            int totalWaitTime = 0;
+            
             switch (comando) {
-                int totalWaitTime = 0;
-
                 case Raspberry::Comando::AUTO_180_ESQUERDA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
-                    totalWaitTime = 600;
+                    totalWaitTime = 800;
                     break;
                 case Raspberry::Comando::AUTO_180_DIREITA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
-                    totalWaitTime = 600;
+                    totalWaitTime = 800;
                     break;
                 case Raspberry::Comando::AUTO_90_ESQUERDA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
-                    totalWaitTime = 600;
-
+                    totalWaitTime = 500;
                     break;
                 case Raspberry::Comando::AUTO_90_DIREITA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
-                    totalWaitTime = 600;
+                    totalWaitTime = 500;
                     break;
                 default:
                     Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
-                    totalWaitTime = 600;
+                    totalWaitTime = 1000;
                     break;
             }
 
@@ -107,10 +106,10 @@ int main(int argc, char *argv[])
             {
                 std::unique_lock<std::mutex> lock(mutex);
                 server.receiveBytes(sizeof(comando), (Raspberry::Byte *) &comando);
-            }
 
-            // Acorda a thread para executar o comando
-            cv_motor.notify_one();            
+                // Acorda a thread para executar o comando
+                cv_motor.notify_one();   
+            }         
         }
     }
     catch (const std::exception& e) {
