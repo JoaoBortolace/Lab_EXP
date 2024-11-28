@@ -760,10 +760,10 @@ namespace ControleAutomatico
                 break;
 
             case Estados::APROXIMA:
-                if (posicaoX > 180) {
+                if (posicaoX > 200) {
                     comando = Raspberry::Comando::DIAGONAL_FRENTE_DIREITA;
                 }
-                else if (posicaoX < 140) {
+                else if (posicaoX < 120) {
                     comando = Raspberry::Comando::DIAGONAL_FRENTE_ESQUERDA;
                 }
                 else {
@@ -780,7 +780,7 @@ namespace ControleAutomatico
             case Estados::FOCA:
                 comando = Raspberry::Comando::PARADO;
 
-                if (Raspberry::timeSinceEpoch() - timer > 1.5) {
+                if (Raspberry::timeSinceEpoch() - timer > 3) {
                     controleEstado = Estados::IDENTIFICA;
                 }
                 break;

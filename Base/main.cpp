@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
             } 
             
             // Envias o comando de controle dos motores            
-            client.sendBytes(sizeof(comando), (Raspberry::Byte*) comando);
+            client.sendBytes(sizeof(comando), (Raspberry::Byte*) &comando);
             
             // Coloca o teclado no quadro
             hconcat(teclado, frameBuf, frameBuf);  
