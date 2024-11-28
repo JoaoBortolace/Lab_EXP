@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     camera.set(CAP_PROP_FRAME_HEIGHT, CAMERA_FRAME_HEIGHT);
 
     // Controle dos Motores
-    std::atomic<bool> runMotor = true;
+    std::atomic<bool> runMotor{true};
     std::thread motorThread(controleMotor, std::ref(runMotor));
 
     try {
