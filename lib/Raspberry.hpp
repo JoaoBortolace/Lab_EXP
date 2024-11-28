@@ -761,10 +761,10 @@ namespace ControleAutomatico
 
             case Estados::APROXIMA:
                 if (posicaoX > 200) {
-                    comando = Raspberry::Comando::DIAGONAL_FRENTE_DIREITA;
+                    comando = Raspberry::Comando::DIAGONAL_FRENTE_ESQUERDA;
                 }
                 else if (posicaoX < 120) {
-                    comando = Raspberry::Comando::DIAGONAL_FRENTE_ESQUERDA;
+                    comando = Raspberry::Comando::DIAGONAL_FRENTE_DIREITA;
                 }
                 else {
                     comando = Raspberry::Comando::FRENTE;

@@ -32,19 +32,19 @@ void controleMotor(std::atomic<bool>& run)
             switch (comando) {
                 case Raspberry::Comando::AUTO_180_ESQUERDA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(750));
                     break;
                 case Raspberry::Comando::AUTO_180_DIREITA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(750));
                     break;
                 case Raspberry::Comando::AUTO_90_ESQUERDA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(400));
                     break;
                 case Raspberry::Comando::AUTO_90_DIREITA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(400));
                     break;
                 default:
                     Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
