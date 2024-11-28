@@ -105,12 +105,11 @@ int main(int argc, char *argv[])
                 Raspberry::FindPos maxCorr = ImageProcessing::TemplateMatching::getMaxCorrelacao(frameBufFlt, modelosPreProcessados, corrBuf, NUM_ESCALAS, escalas);
 
                 // Caso tenha encontrado um template
-                bool encontrado = false, enquadrado = false;
+                bool encontrado = false;
 
                 if (maxCorr.ponto.correlacao > THRESHOLD) { 
-                    encontrado = true;
-                    if (maxCorr.escala > ESCALA_DIST_MIN && maxCorr.ponto.posicao.x > 120 && maxCorr.ponto.posicao.x < 200) {
-                        enquadrado = true;
+                    if (maxCorr.escala > ESCALA_DIST_MIN) {
+                        encontrado = true;
                     } 
 
                     // Desenha um retangulo ao redor da posição de maior correlação encontrada
@@ -124,7 +123,7 @@ int main(int argc, char *argv[])
                 } 
                 
                 // Processa a máquina de estados
-                ControleAutomatico::maquinaEstados(controleEstado, comando, encontrado, enquadrado, numPredito, maxCorr.ponto.posicao.x);   
+                ControleAutomatico::maquinaEstados(controleEstado, comando, encontrado, numPredito);   
             } 
             
             // Envias o comando de controle dos motores            

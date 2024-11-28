@@ -737,7 +737,6 @@ namespace ControleAutomatico
     typedef enum 
     {
         BUSCA = 0,
-        APROXIMA,
         FOCA,
         IDENTIFICA,
         FINALIZA,
@@ -746,7 +745,7 @@ namespace ControleAutomatico
     /*
      * Máquina de estado do controle automático
      */
-    inline void maquinaEstados(Estados& controleEstado, Raspberry::Comando& comando, bool encontrado, bool enquadrado, int numPredito, int posicaoX)
+    inline void maquinaEstados(Estados& controleEstado, Raspberry::Comando& comando, bool encontrado, int numPredito)
     {
         static double timer = 0.0;
 
@@ -755,23 +754,6 @@ namespace ControleAutomatico
                 comando = Raspberry::Comando::FRENTE;
                 
                 if (encontrado == true) {
-                    controleEstado = Estados::APROXIMA;
-                }
-                break;
-
-            case Estados::APROXIMA:
-                if (posicaoX > 200) {
-                    comando = Raspberry::Comando::DIAGONAL_FRENTE_ESQUERDA;
-                }
-                else if (posicaoX < 120) {
-                    comando = Raspberry::Comando::DIAGONAL_FRENTE_DIREITA;
-                }
-                else {
-                    comando = Raspberry::Comando::FRENTE;
-                }
-
-                if (enquadrado == true) {
-                    comando = Raspberry::Comando::PARADO;
                     controleEstado = Estados::FOCA;
                     timer = Raspberry::timeSinceEpoch();
                 }
@@ -780,7 +762,7 @@ namespace ControleAutomatico
             case Estados::FOCA:
                 comando = Raspberry::Comando::PARADO;
 
-                if (Raspberry::timeSinceEpoch() - timer > 3) {
+                if (Raspberry::timeSinceEpoch() - timer > 2) {
                     controleEstado = Estados::IDENTIFICA;
                 }
                 break;
@@ -819,7 +801,7 @@ namespace ControleAutomatico
             case Estados::FINALIZA:
                 comando = Raspberry::Comando::PARADO;
 
-                if (Raspberry::timeSinceEpoch() - timer > 3.0) {
+                if (Raspberry::timeSinceEpoch() - timer > 2.0) {
                     controleEstado = Estados::BUSCA;
                 }
                 break;

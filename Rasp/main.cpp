@@ -17,6 +17,8 @@ void controleMotor(std::atomic<bool>& run)
 {
     // Inicializa os GPIOs da ponte H
     Raspberry::Motores::init();
+    
+    int step = 10; // Checa a cada 100 ms
 
     while(run) {
         std::unique_lock<std::mutex> lock(mutex);
@@ -30,26 +32,34 @@ void controleMotor(std::atomic<bool>& run)
         }
         else { // Modo automático
             switch (comando) {
+                int totalWaitTime = 0;
+
                 case Raspberry::Comando::AUTO_180_ESQUERDA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(750));
+                    totalWaitTime = 600;
                     break;
                 case Raspberry::Comando::AUTO_180_DIREITA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(750));
+                    totalWaitTime = 600;
                     break;
                 case Raspberry::Comando::AUTO_90_ESQUERDA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+                    totalWaitTime = 600;
+
                     break;
                 case Raspberry::Comando::AUTO_90_DIREITA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(400));
+                    totalWaitTime = 600;
                     break;
                 default:
                     Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+                    totalWaitTime = 600;
                     break;
+            }
+
+            // Checa periodicamente para evitar travamento
+            for (int elapsed = 0; elapsed < totalWaitTime && run; elapsed += step) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(step));
             }
             
             Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
