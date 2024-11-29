@@ -32,11 +32,11 @@ void controleMotor(std::atomic<bool>& run)
             switch (comando) {
                 case Raspberry::Comando::AUTO_180_ESQUERDA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1100));
                     break;
                 case Raspberry::Comando::AUTO_180_DIREITA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1100));
                     break;
                 case Raspberry::Comando::AUTO_90_ESQUERDA:
                     Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
@@ -48,7 +48,7 @@ void controleMotor(std::atomic<bool>& run)
                     break;
                 default:
                     Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
                     break;
             }
             
@@ -96,11 +96,11 @@ int main(int argc, char *argv[])
             // Recebe o comando de ação
             {
                 std::unique_lock<std::mutex> lock(mutex);
-                server.receiveBytes(sizeof(comando), (Raspberry::Byte *) &comando);
-
-                // Acorda a thread para executar o comando
-                cv_motor.notify_all();   
+                server.receiveBytes(sizeof(comando), (Raspberry::Byte *) &comando); 
             }         
+
+            // Acorda a thread para executar o comando
+            cv_motor.notify_all();  
         }
     }
     catch (const std::exception& e) {
