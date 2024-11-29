@@ -29,29 +29,37 @@ void controleMotor(std::atomic<bool>& run)
             Raspberry::Motores::setDir(comando);
         }
         else { // Modo automático            
+            auto executarAcao = [&](Raspberry::Comando dir, int duracao) {
+                auto start = std::chrono::steady_clock::now();
+                Raspberry::Motores::setDir(dir);
+                
+                while (std::chrono::steady_clock::now() - start < std::chrono::milliseconds(duracao)) {
+                    if (!run) {
+                        break;  // Interrompe em caso de finalização
+                    }
+                    
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                }
+            };
+
             switch (comando) {
                 case Raspberry::Comando::AUTO_180_ESQUERDA:
-                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1100));
+                    executarAcao(Raspberry::Comando::GIRA_ESQUERDA, 1100);
                     break;
                 case Raspberry::Comando::AUTO_180_DIREITA:
-                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1100));
+                    executarAcao(Raspberry::Comando::GIRA_DIREITA, 1100);
                     break;
                 case Raspberry::Comando::AUTO_90_ESQUERDA:
-                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(600));
+                    executarAcao(Raspberry::Comando::GIRA_ESQUERDA, 600);
                     break;
                 case Raspberry::Comando::AUTO_90_DIREITA:
-                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(600));
+                    executarAcao(Raspberry::Comando::GIRA_DIREITA, 600);
                     break;
                 default:
-                    Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+                    executarAcao(Raspberry::Comando::PARADO, 1500);
                     break;
             }
-            
+
             Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
         }
     }
