@@ -18,7 +18,7 @@ int pwmMotor[4] = {0};
 void controleMotor(std::atomic<bool>& run)
 {
     // Inicializa os GPIOs da ponte H
-    Raspberry::Motores::initPWM();
+    Raspberry::Motores::initPwm();
     
     while(run) {
         std::unique_lock<std::mutex> lock(mutex);
@@ -34,7 +34,7 @@ void controleMotor(std::atomic<bool>& run)
             auto executarAcao = [&](Raspberry::Comando dir, int duracao) {
                 auto start = std::chrono::steady_clock::now();
                 
-                Raspberry::Motores::setDirPwm(dir);
+                Raspberry::Motores::setDirPwm(dir, 100);
                 
                 while (std::chrono::steady_clock::now() - start < std::chrono::milliseconds(duracao)) {
                     if (!run) {
@@ -62,7 +62,7 @@ void controleMotor(std::atomic<bool>& run)
                     break;
             }
 
-            Raspberry::Motores::setDirPWM(Raspberry::Comando::PARADO);
+            Raspberry::Motores::setDirPwm(Raspberry::Comando::PARADO);
         }
     }
 
