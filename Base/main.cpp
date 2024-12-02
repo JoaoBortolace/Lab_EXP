@@ -17,7 +17,7 @@
 #define ESCALA          ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS)
 #define THRESHOLD       0.65f
 
-#define ESCALA_DIST_MIN 0.07f
+#define ESCALA_DIST_MIN 0.06f
 
 /* -------- Variáveis Globais -------- */
 static Mat_<Raspberry::Cor> teclado;
