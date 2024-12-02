@@ -796,6 +796,8 @@ namespace ControleAutomatico
             }
 
             case Estados::IDENTIFICA: {
+                std::cout << numPredito << std::endl;
+                
                 switch (numPredito) {
                     case 2:
                         comando = Raspberry::Comando::AUTO_180_ESQUERDA;

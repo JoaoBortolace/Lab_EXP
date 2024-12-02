@@ -46,19 +46,19 @@ void controleMotor(std::atomic<bool>& run)
 
             switch (comando) {
                 case Raspberry::Comando::AUTO_180_ESQUERDA:
-                    executarAcao(Raspberry::Comando::GIRA_ESQUERDA, 1000);
+                    executarAcao(Raspberry::Comando::GIRA_ESQUERDA, 900);
                     break;
                 case Raspberry::Comando::AUTO_180_DIREITA:
-                    executarAcao(Raspberry::Comando::GIRA_DIREITA, 1000);
+                    executarAcao(Raspberry::Comando::GIRA_DIREITA, 900);
                     break;
                 case Raspberry::Comando::AUTO_90_ESQUERDA:
-                    executarAcao(Raspberry::Comando::GIRA_ESQUERDA, 600);
+                    executarAcao(Raspberry::Comando::GIRA_ESQUERDA, 550);
                     break;
                 case Raspberry::Comando::AUTO_90_DIREITA:
-                    executarAcao(Raspberry::Comando::GIRA_DIREITA, 600);
+                    executarAcao(Raspberry::Comando::GIRA_DIREITA, 550);
                     break;
                 case Raspberry::Comando::AUTO_FRENTE:
-                    executarAcao(Raspberry::Comando::FRENTE, 1000);
+                    executarAcao(Raspberry::Comando::FRENTE, 750);
                     break;
                 default:
                     executarAcao(Raspberry::Comando::PARADO, 1500);
