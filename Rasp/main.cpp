@@ -19,8 +19,6 @@ void controleMotor(std::atomic<bool>& run)
 {
     // Inicializa os GPIOs da ponte H
     Raspberry::Motores::initPwm();
-    double timer = Raspberry::timeSinceEpoch();
-    double timeExe = 0.0;
 
     while(run) {
         std::unique_lock<std::mutex> lock(mutex);
@@ -67,8 +65,7 @@ void controleMotor(std::atomic<bool>& run)
                     break;
             }
 
-            timer = Raspberry::timeSinceEpoch();
-            
+            double timer = Raspberry::timeSinceEpoch();    
             while (Raspberry::timeSinceEpoch() - timer < timeExe) {
                 ;;
             }
