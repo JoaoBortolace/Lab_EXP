@@ -17,7 +17,7 @@
 #define ESCALA          ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS)
 #define THRESHOLD       0.65f
 
-#define ESCALA_DIST_MIN 0.1f
+#define ESCALA_DIST_MIN 0.06f
 
 /* -------- Variáveis Globais -------- */
 static Mat_<Raspberry::Cor> teclado;
@@ -112,7 +112,8 @@ int main(int argc, char *argv[])
 
                 if (maxCorr.ponto.correlacao > THRESHOLD) {
                     encontrado = true; 
-                    if (maxCorr.escala > ESCALA_DIST_MIN && maxCorr.ponto.posicao.x > 140 && maxCorr.ponto.posicao.x < 180) {
+
+                    if (maxCorr.escala > ESCALA_DIST_MIN && maxCorr.ponto.posicao.x > 130 && maxCorr.ponto.posicao.x < 190) {
                         enquadrado = true;
                     } 
 

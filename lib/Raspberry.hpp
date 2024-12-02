@@ -775,10 +775,7 @@ namespace ControleAutomatico
                     pwmMotor[3] += pos_normalizada;
                 }
 
-                if (!encontrado) {
-                    controleEstado = Estados::BUSCA;
-                }
-                else if (enquadrado) {
+                if (enquadrado) {
                     controleEstado = Estados::FOCA;
                     timer = std::chrono::steady_clock::now();
                 }
@@ -791,7 +788,7 @@ namespace ControleAutomatico
 
                 auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - timer).count();
 
-                if (elapsed > 2) {
+                if (elapsed > 4) {
                     controleEstado = Estados::IDENTIFICA;
                 }
 
