@@ -19,7 +19,9 @@ void controleMotor(std::atomic<bool>& run)
 {
     // Inicializa os GPIOs da ponte H
     Raspberry::Motores::initPwm();
-    
+    double timer = Raspberry::timeSinceEpoch();
+    double timeExe = 0.0;
+
     while(run) {
         std::unique_lock<std::mutex> lock(mutex);
 
@@ -31,40 +33,46 @@ void controleMotor(std::atomic<bool>& run)
             Raspberry::Motores::setVelPWM(pwmMotor);
         }
         else { // Modo automático            
-            auto executarAcao = [&](Raspberry::Comando dir, int duracao) {
-                auto start = std::chrono::steady_clock::now();
-                
-                Raspberry::Motores::setDirPwm(dir, 100);
-                
-                while (std::chrono::steady_clock::now() - start < std::chrono::milliseconds(duracao)) {
-                    if (!run) {
-                        break;  // Interrompe em caso de finalização
-                    }
-                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-                }
-            };
+            double timeExe = 0.0;
 
             switch (comando) {
                 case Raspberry::Comando::AUTO_180_ESQUERDA:
-                    executarAcao(Raspberry::Comando::GIRA_ESQUERDA, 900);
+                    Raspberry::Motores::setDirPwm(Raspberry::Comando::GIRA_ESQUERDA, 100);
+                    timeExe = 0.9;
                     break;
+
                 case Raspberry::Comando::AUTO_180_DIREITA:
-                    executarAcao(Raspberry::Comando::GIRA_DIREITA, 900);
+                    Raspberry::Motores::setDirPwm(Raspberry::Comando::GIRA_DIREITA, 100);
+                    timeExe = 0.9;
                     break;
+
                 case Raspberry::Comando::AUTO_90_ESQUERDA:
-                    executarAcao(Raspberry::Comando::GIRA_ESQUERDA, 500);
+                    Raspberry::Motores::setDirPwm(Raspberry::Comando::GIRA_ESQUERDA, 100);
+                    timeExe = 0.5;
                     break;
+
                 case Raspberry::Comando::AUTO_90_DIREITA:
-                    executarAcao(Raspberry::Comando::GIRA_DIREITA, 500);
+                    Raspberry::Motores::setDirPwm(Raspberry::Comando::GIRA_DIREITA, 100);
+                    timeExe = 0.5;
                     break;
+
                 case Raspberry::Comando::AUTO_FRENTE:
-                    executarAcao(Raspberry::Comando::FRENTE, 1800);
+                    Raspberry::Motores::setDirPwm(Raspberry::Comando::FRENTE, 100);
+                    timeExe = 1.8;
                     break;
+
                 default:
-                    executarAcao(Raspberry::Comando::PARADO, 1500);
+                    Raspberry::Motores::setDirPwm(Raspberry::Comando::PARADO, 100);
+                    timeExe = 1.5;
                     break;
             }
 
+            timer = Raspberry::timeSinceEpoch();
+            
+            while (Raspberry::timeSinceEpoch() - timer < tempExe) {
+                ;;
+            }
+            
             Raspberry::Motores::setDirPwm(Raspberry::Comando::PARADO, 100);
         }
     }

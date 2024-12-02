@@ -747,7 +747,7 @@ namespace ControleAutomatico
      */
     inline void maquinaEstados(Estados& controleEstado, Raspberry::Comando& comando, bool encontrado, bool enquadrado, int posX, int pwmMotor[], int numPredito) 
     {
-        static auto timer = std::chrono::steady_clock::now();
+        static double timer = Raspberry::timeSinceEpoch();
 
         switch (controleEstado) {
             case Estados::BUSCA: {
@@ -778,7 +778,7 @@ namespace ControleAutomatico
 
                 if (enquadrado) {
                     controleEstado = Estados::FOCA;
-                    timer = std::chrono::steady_clock::now();
+                    timer = Raspberry::timeSinceEpoch();
                 }
                 break;
             }
@@ -787,9 +787,7 @@ namespace ControleAutomatico
                 comando = Raspberry::Comando::PARADO;
                 pwmMotor[1] = pwmMotor[2] = pwmMotor[3] = pwmMotor[4] = 0;
 
-                auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - timer).count();
-
-                if (elapsed > 4 && encontrado && encontrado) {
+                if ((Raspberry::timeSinceEpoch() - timer) > 4.0 && encontrado && encontrado) {
                     controleEstado = Estados::IDENTIFICA;
                 }
 
@@ -828,17 +826,15 @@ namespace ControleAutomatico
                 pwmMotor[1] = pwmMotor[2] = pwmMotor[3] = pwmMotor[4] = 0;
                 
                 controleEstado = Estados::FINALIZA;
-                timer = std::chrono::steady_clock::now();
+                timer = Raspberry::timeSinceEpoch();
                 break;
             }
 
             case Estados::FINALIZA: {
                 comando = Raspberry::Comando::PARADO;
                 pwmMotor[1] = pwmMotor[2] = pwmMotor[3] = pwmMotor[4] = 0;
-                
-                auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - timer).count();
-                
-                if (elapsed > 2) {
+                                
+                if (Raspberry::timeSinceEpoch() - timer > 2.0) {
                     controleEstado = Estados::BUSCA;
                 }
                 break;
