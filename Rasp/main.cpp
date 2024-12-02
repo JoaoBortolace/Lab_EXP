@@ -69,7 +69,7 @@ void controleMotor(std::atomic<bool>& run)
 
             timer = Raspberry::timeSinceEpoch();
             
-            while (Raspberry::timeSinceEpoch() - timer < tempExe) {
+            while (Raspberry::timeSinceEpoch() - timer < timeExe) {
                 ;;
             }
             
