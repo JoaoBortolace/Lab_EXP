@@ -62,7 +62,7 @@ void controleMotor(std::atomic<bool>& run)
                     break;
             }
 
-            Raspberry::Motores::setDirPwm(Raspberry::Comando::PARADO);
+            Raspberry::Motores::setDirPwm(Raspberry::Comando::PARADO, 100);
         }
     }
 
