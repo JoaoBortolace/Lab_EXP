@@ -23,6 +23,7 @@
 static Mat_<Raspberry::Cor> teclado;
 static Raspberry::Controle controle = Raspberry::Controle::MANUAL;
 static Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
+static int pwmMotor[4] = {0};
 
 /* -------- Callbacks -------- */
 void mouse_callback(int event, int x, int y, int flags, void *usedata)
@@ -36,7 +37,8 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
         
         // Obtem qual comando foi pressionado, e qual deve ser os valores dos PWMs
         Raspberry::getComando(col, row, teclado, comando);
-        
+        Raspberry::getVelocidades(comando, pwmMotor);
+
         // Alterna entre o controle manual ou automático
         if (comando == Raspberry::Comando::ALTERNA_MODO) {
             controle = static_cast<Raspberry::Controle>(~controle & 1);
@@ -45,6 +47,7 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
     else if (event == EVENT_LBUTTONUP) {
         Raspberry::limpaTeclado(teclado, comando);
         comando = Raspberry::Comando::NAO_SELECIONADO;
+        pwmMotor[1] = pwmMotor[2] = pwmMotor[3] = pwmMotor[4] = 0;    
     }
 }
 
@@ -105,11 +108,12 @@ int main(int argc, char *argv[])
                 Raspberry::FindPos maxCorr = ImageProcessing::TemplateMatching::getMaxCorrelacao(frameBufFlt, modelosPreProcessados, corrBuf, NUM_ESCALAS, escalas);
 
                 // Caso tenha encontrado um template
-                bool encontrado = false;
+                bool encontrado = false, enquadrado = false;
 
-                if (maxCorr.ponto.correlacao > THRESHOLD) { 
-                    if (maxCorr.escala > ESCALA_DIST_MIN) {
-                        encontrado = true;
+                if (maxCorr.ponto.correlacao > THRESHOLD) {
+                    encontrado = true; 
+                    if (maxCorr.escala > ESCALA_DIST_MIN && maxCorr.ponto.posicao.x > 140 && maxCorr.ponto.posicao.x < 180) {
+                        enquadrado = true;
                     } 
 
                     // Desenha um retangulo ao redor da posição de maior correlação encontrada
@@ -123,11 +127,12 @@ int main(int argc, char *argv[])
                 } 
                 
                 // Processa a máquina de estados
-                ControleAutomatico::maquinaEstados(controleEstado, comando, encontrado, numPredito);   
+                ControleAutomatico::maquinaEstados(controleEstado, comando, encontrado, enquadrado, maxCorr.ponto.posicao.x, pwmMotor, numPredito);   
             } 
             
             // Envias o comando de controle dos motores            
             client.sendBytes(sizeof(comando), (Raspberry::Byte*) &comando);
+            client.sendBytes(sizeof(pwmMotor), (Raspberry::Byte*) pwmMotor);
             
             // Coloca o teclado no quadro
             hconcat(teclado, frameBuf, frameBuf);  

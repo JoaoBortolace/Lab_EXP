@@ -10,13 +10,15 @@
 /* -------- Variáveis Globais -------- */
 std::mutex mutex;
 std::condition_variable cv_motor;
+
 Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
+int pwmMotor[4] = {0};
 
 /* -------- Thread de controle dos motores -------- */
 void controleMotor(std::atomic<bool>& run)
 {
     // Inicializa os GPIOs da ponte H
-    Raspberry::Motores::init();
+    Raspberry::Motores::initPWM();
     
     while(run) {
         std::unique_lock<std::mutex> lock(mutex);
@@ -26,28 +28,28 @@ void controleMotor(std::atomic<bool>& run)
 
         // Modo manual
         if (comando < Raspberry::Comando::AUTO_PARADO) {
-            Raspberry::Motores::setDir(comando);
+            Raspberry::Motores::setVelPWM(pwmMotor);
         }
         else { // Modo automático            
             auto executarAcao = [&](Raspberry::Comando dir, int duracao) {
                 auto start = std::chrono::steady_clock::now();
-                Raspberry::Motores::setDir(dir);
+                
+                Raspberry::Motores::setDirPwm(dir);
                 
                 while (std::chrono::steady_clock::now() - start < std::chrono::milliseconds(duracao)) {
                     if (!run) {
                         break;  // Interrompe em caso de finalização
                     }
-                    
                     std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
             };
 
             switch (comando) {
                 case Raspberry::Comando::AUTO_180_ESQUERDA:
-                    executarAcao(Raspberry::Comando::GIRA_ESQUERDA, 1100);
+                    executarAcao(Raspberry::Comando::GIRA_ESQUERDA, 1000);
                     break;
                 case Raspberry::Comando::AUTO_180_DIREITA:
-                    executarAcao(Raspberry::Comando::GIRA_DIREITA, 1100);
+                    executarAcao(Raspberry::Comando::GIRA_DIREITA, 1000);
                     break;
                 case Raspberry::Comando::AUTO_90_ESQUERDA:
                     executarAcao(Raspberry::Comando::GIRA_ESQUERDA, 600);
@@ -60,12 +62,12 @@ void controleMotor(std::atomic<bool>& run)
                     break;
             }
 
-            Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
+            Raspberry::Motores::setDirPWM(Raspberry::Comando::PARADO);
         }
     }
 
     // Desliga os motores
-    Raspberry::Motores::stop();
+    Raspberry::Motores::stopPWM();
 }
 
 /* -------- Main -------- */
@@ -105,6 +107,7 @@ int main(int argc, char *argv[])
             {
                 std::unique_lock<std::mutex> lock(mutex);
                 server.receiveBytes(sizeof(comando), (Raspberry::Byte *) &comando); 
+                server.receiveBytes(sizeof(pwmMotor), (Raspberry::Byte *) pwmMotor); 
             }         
 
             // Acorda a thread para executar o comando
