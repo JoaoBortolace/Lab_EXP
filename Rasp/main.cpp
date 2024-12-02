@@ -40,7 +40,7 @@ void controleMotor(std::atomic<bool>& run)
                     if (!run) {
                         break;  // Interrompe em caso de finalização
                     }
-                    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
                 }
             };
 
@@ -58,7 +58,7 @@ void controleMotor(std::atomic<bool>& run)
                     executarAcao(Raspberry::Comando::GIRA_DIREITA, 500);
                     break;
                 case Raspberry::Comando::AUTO_FRENTE:
-                    executarAcao(Raspberry::Comando::FRENTE, 1500);
+                    executarAcao(Raspberry::Comando::FRENTE, 3000);
                     break;
                 default:
                     executarAcao(Raspberry::Comando::PARADO, 1500);

@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
                 if (maxCorr.ponto.correlacao > THRESHOLD) {
                     encontrado = true; 
 
-                    if (maxCorr.escala > ESCALA_DIST_MIN && maxCorr.ponto.posicao.x > 140 && maxCorr.ponto.posicao.x < 180) {
+                    if (maxCorr.escala > ESCALA_DIST_MIN && maxCorr.ponto.posicao.x > 120 && maxCorr.ponto.posicao.x < 200) {
                         enquadrado = true;
                     } 
 

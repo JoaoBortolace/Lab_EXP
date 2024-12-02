@@ -767,7 +767,7 @@ namespace ControleAutomatico
                 pwmMotor[2] = pwmMotor[4] = 0;
 
                 int pos_normalizada = (int) ((posX - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/100.0)); 
-                pos_normalizada >> 1;
+                pos_normalizada = pos_normalizada >> 1;
 
                 if (pos_normalizada > 0) {
                     pwmMotor[1] -= pos_normalizada; 
@@ -789,7 +789,7 @@ namespace ControleAutomatico
 
                 auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::steady_clock::now() - timer).count();
 
-                if (elapsed > 4) {
+                if (elapsed > 4 && encontrado && encontrado) {
                     controleEstado = Estados::IDENTIFICA;
                 }
 
