@@ -45,12 +45,12 @@ void controleMotor(std::atomic<bool>& run)
 
                 case Raspberry::Comando::AUTO_90_ESQUERDA:
                     Raspberry::Motores::setDirAjustado(Raspberry::Comando::GIRA_ESQUERDA);
-                    timeExe = 0.5;
+                    timeExe = 0.45;
                     break;
 
                 case Raspberry::Comando::AUTO_90_DIREITA:
                     Raspberry::Motores::setDirAjustado(Raspberry::Comando::GIRA_DIREITA);
-                    timeExe = 0.5;
+                    timeExe = 0.45;
                     break;
 
                 case Raspberry::Comando::AUTO_FRENTE:
