@@ -292,12 +292,12 @@ namespace Raspberry
             switch (comando) {
                 case FRENTE:
                     softPwmWrite(M1_A, 0);
-                    softPwmWrite(M1_B, 82);
+                    softPwmWrite(M1_B, 88);
                     softPwmWrite(M2_A, 0);
                     softPwmWrite(M2_B, 100);
                     break;
                 case ATRAS:
-                    softPwmWrite(M1_A, 82);
+                    softPwmWrite(M1_A, 88);
                     softPwmWrite(M1_B, 0);
                     softPwmWrite(M2_A, 100);
                     softPwmWrite(M2_B, 0);
