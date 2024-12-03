@@ -17,12 +17,15 @@
 #define ESCALA          ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS)
 #define THRESHOLD       0.6f
 
-#define ESCALA_DIST_MIN 0.08f
+#define ESCALA_DIST_MIN 0.1f
 
 /* -------- Variáveis Globais -------- */
 static Mat_<Raspberry::Cor> teclado;
 static Raspberry::Controle controle = Raspberry::Controle::MANUAL;
 static Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
+
+ControleAutomatico::Estados controleEstado = ControleAutomatico::Estados::BUSCA;
+
 
 /* -------- Callbacks -------- */
 void mouse_callback(int event, int x, int y, int flags, void *usedata)
@@ -41,6 +44,7 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
         if (comando == Raspberry::Comando::ALTERNA_MODO) {
             controle = static_cast<Raspberry::Controle>(~controle & 1);
             Raspberry::limpaTeclado(teclado, comando);
+            controleEstado = ControleAutomatico::Estados::BUSCA;
         }
     }
     else if (event == EVENT_LBUTTONUP) {
@@ -77,7 +81,6 @@ int main(int argc, char *argv[])
     Raspberry::FindPos corrBuf[NUM_ESCALAS];
 
     // Variáveis auxliares para o controle automático
-    ControleAutomatico::Estados controleEstado = ControleAutomatico::Estados::BUSCA;
     int numPredito;
 
     // Modelo para reconhecer o número do MNIST
