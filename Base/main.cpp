@@ -17,13 +17,12 @@
 #define ESCALA          ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS)
 #define THRESHOLD       0.65f
 
-#define ESCALA_DIST_MIN 0.065f
+#define ESCALA_DIST_MIN 0.075f
 
 /* -------- Variáveis Globais -------- */
 static Mat_<Raspberry::Cor> teclado;
 static Raspberry::Controle controle = Raspberry::Controle::MANUAL;
 static Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
-static int pwmMotor[4] = {0};
 
 /* -------- Callbacks -------- */
 void mouse_callback(int event, int x, int y, int flags, void *usedata)
@@ -37,7 +36,6 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
         
         // Obtem qual comando foi pressionado, e qual deve ser os valores dos PWMs
         Raspberry::getComando(col, row, teclado, comando);
-        Raspberry::getVelocidades(comando, pwmMotor);
 
         // Alterna entre o controle manual ou automático
         if (comando == Raspberry::Comando::ALTERNA_MODO) {
@@ -47,7 +45,6 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
     else if (event == EVENT_LBUTTONUP) {
         Raspberry::limpaTeclado(teclado, comando);
         comando = Raspberry::Comando::NAO_SELECIONADO;
-        memset(pwmMotor, 0, sizeof(pwmMotor));
     }
 }
 
@@ -108,11 +105,9 @@ int main(int argc, char *argv[])
                 Raspberry::FindPos maxCorr = ImageProcessing::TemplateMatching::getMaxCorrelacao(frameBufFlt, modelosPreProcessados, corrBuf, NUM_ESCALAS, escalas);
 
                 // Caso tenha encontrado um template
-                bool encontrado = false, enquadrado = false;
+                bool enquadrado = false;
 
                 if (maxCorr.ponto.correlacao > THRESHOLD) {
-                    encontrado = true; 
-
                     if (maxCorr.escala > ESCALA_DIST_MIN) {
                         enquadrado = true;
                     } 
@@ -124,16 +119,15 @@ int main(int argc, char *argv[])
                     // Realiza a predição do numero encontrado
                     numPredito = MNIST::inferencia(numEncontrado, module);
                     // Adiciona o número predito ao quadro
-                    putText(frameBuf, std::to_string(numPredito), Point(200, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::blue03, 1.2); 
+                    putText(frameBuf, std::to_string(numPredito), Point(220, 220), FONT_HERSHEY_DUPLEX, 1.0, Raspberry::Paleta::blue03, 1.2); 
                 } 
                 
                 // Processa a máquina de estados
-                ControleAutomatico::maquinaEstados(controleEstado, comando, encontrado, enquadrado, maxCorr.ponto.posicao.x, pwmMotor, numPredito);   
+                ControleAutomatico::maquinaEstados(controleEstado, comando, enquadrado, numPredito);   
             } 
             
             // Envias o comando de controle dos motores            
             client.sendBytes(sizeof(comando), (Raspberry::Byte*) &comando);
-            client.sendBytes(sizeof(pwmMotor), (Raspberry::Byte*) pwmMotor);
             
             // Coloca o teclado no quadro
             hconcat(teclado, frameBuf, frameBuf);  

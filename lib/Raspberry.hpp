@@ -97,7 +97,7 @@ namespace Raspberry
     inline double timeSinceEpoch(void) 
     {
         using namespace std::chrono;
-        return duration_cast<duration<double>>( system_clock::now().time_since_epoch() ).count();
+        return duration_cast<duration<double>>(steady_clock::now().time_since_epoch()).count();
     }
 
     #ifdef RASP    
@@ -736,7 +736,6 @@ namespace ControleAutomatico
     typedef enum 
     {
         BUSCA = 0,
-        ENQUADRA,
         FOCA,
         IDENTIFICA,
         FINALIZA,
@@ -745,52 +744,35 @@ namespace ControleAutomatico
     /*
      * Máquina de estado do controle automático
      */
-    inline void maquinaEstados(Estados& controleEstado, Raspberry::Comando& comando, bool encontrado, bool enquadrado, int posX, int pwmMotor[], int numPredito) 
+    inline void maquinaEstados(Estados& controleEstado, Raspberry::Comando& comando, bool enquadrado, int numPredito) 
     {
         static double timer = Raspberry::timeSinceEpoch();
 
         switch (controleEstado) {
             case Estados::BUSCA: {
                 comando = Raspberry::Comando::FRENTE;
-                pwmMotor[1] = pwmMotor[3] = 100;
-                pwmMotor[2] = pwmMotor[4] = 0;
 
-                if (encontrado) {
-                    controleEstado = Estados::ENQUADRA;
+                if (enquadrado) {
+                    controleEstado = Estados::FOCA;
                 }
                 break;
             }
             
-            case Estados::ENQUADRA: {
-                comando = Raspberry::Comando::FRENTE;
-                pwmMotor[1] = pwmMotor[3] = 100;
-                pwmMotor[2] = pwmMotor[4] = 0;
-
-                int pos_normalizada = (int) ((posX - (CAMERA_FRAME_WIDTH >> 1)) / ((CAMERA_FRAME_WIDTH >> 1)/100.0)); 
-                pos_normalizada = pos_normalizada >> 1;
-
-                if (pos_normalizada > 0) {
-                    pwmMotor[1] -= pos_normalizada; 
-                }
-                else {
-                    pwmMotor[3] += pos_normalizada;
-                }
-
-                if (enquadrado) {
-                    controleEstado = Estados::FOCA;
-                    timer = Raspberry::timeSinceEpoch();
-                }
-                break;
-            }
-
             case Estados::FOCA: {
-                comando = Raspberry::Comando::PARADO;
-                pwmMotor[1] = pwmMotor[2] = pwmMotor[3] = pwmMotor[4] = 0;
+                static bool inicioDelay = true;
 
-                if ((Raspberry::timeSinceEpoch() - timer) > 4.0 && encontrado && encontrado) {
-                    controleEstado = Estados::IDENTIFICA;
+                if (inicioDelay) {
+                    timer = Raspberry::timeSinceEpoch();
+                    inicioDelay = false;
                 }
 
+                comando = Raspberry::Comando::PARADO;
+
+                double tempoDecorrido = Raspberry::timeSinceEpoch() - timer;
+                if (tempoDecorrido > 2.0 && enquadrado) {
+                    controleEstado = Estados::IDENTIFICA;
+                    inicioDelay = true;
+                }
                 break;
             }
 
@@ -823,26 +805,31 @@ namespace ControleAutomatico
                         break;
                 }
 
-                pwmMotor[1] = pwmMotor[2] = pwmMotor[3] = pwmMotor[4] = 0;
-                
-                controleEstado = Estados::FINALIZA;
                 timer = Raspberry::timeSinceEpoch();
+                controleEstado = Estados::FINALIZA;
                 break;
             }
 
             case Estados::FINALIZA: {
+                static bool inicioDelay = true;
+
+                if (inicioDelay) {
+                    timer = Raspberry::timeSinceEpoch();
+                    inicioDelay = false;
+                }
+
                 comando = Raspberry::Comando::PARADO;
-                pwmMotor[1] = pwmMotor[2] = pwmMotor[3] = pwmMotor[4] = 0;
-                                
-                if (Raspberry::timeSinceEpoch() - timer > 2.0) {
+                double tempoDecorrido = Raspberry::timeSinceEpoch() - timer;
+
+                if (tempoDecorrido > 2.0) {
                     controleEstado = Estados::BUSCA;
+                    inicioDelay = true;
                 }
                 break;
             }
 
             default: {
-                comando = Raspberry::Comando::PARADO;
-                pwmMotor[1] = pwmMotor[2] = pwmMotor[3] = pwmMotor[4] = 0;                
+                comando = Raspberry::Comando::PARADO;               
                 controleEstado = Estados::BUSCA;
                 break;
             }

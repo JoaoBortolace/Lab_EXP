@@ -12,13 +12,12 @@ std::mutex mutex;
 std::condition_variable cv_motor;
 
 Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
-int pwmMotor[4] = {0};
 
 /* -------- Thread de controle dos motores -------- */
 void controleMotor(std::atomic<bool>& run)
 {
     // Inicializa os GPIOs da ponte H
-    Raspberry::Motores::initPwm();
+    Raspberry::Motores::init();
 
     while(run) {
         std::unique_lock<std::mutex> lock(mutex);
@@ -28,39 +27,39 @@ void controleMotor(std::atomic<bool>& run)
 
         // Modo manual
         if (comando < Raspberry::Comando::AUTO_PARADO) {
-            Raspberry::Motores::setVelPWM(pwmMotor);
+            Raspberry::Motores::setDir(comando);
         }
         else { // Modo automático            
             double timeExe = 0.0;
 
             switch (comando) {
                 case Raspberry::Comando::AUTO_180_ESQUERDA:
-                    Raspberry::Motores::setDirPwm(Raspberry::Comando::GIRA_ESQUERDA, 100);
+                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
                     timeExe = 0.9;
                     break;
 
                 case Raspberry::Comando::AUTO_180_DIREITA:
-                    Raspberry::Motores::setDirPwm(Raspberry::Comando::GIRA_DIREITA, 100);
+                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
                     timeExe = 0.9;
                     break;
 
                 case Raspberry::Comando::AUTO_90_ESQUERDA:
-                    Raspberry::Motores::setDirPwm(Raspberry::Comando::GIRA_ESQUERDA, 100);
+                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
                     timeExe = 0.5;
                     break;
 
                 case Raspberry::Comando::AUTO_90_DIREITA:
-                    Raspberry::Motores::setDirPwm(Raspberry::Comando::GIRA_DIREITA, 100);
+                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
                     timeExe = 0.5;
                     break;
 
                 case Raspberry::Comando::AUTO_FRENTE:
-                    Raspberry::Motores::setDirPwm(Raspberry::Comando::FRENTE, 100);
+                    Raspberry::Motores::setDir(Raspberry::Comando::FRENTE);
                     timeExe = 1.8;
                     break;
 
                 default:
-                    Raspberry::Motores::setDirPwm(Raspberry::Comando::PARADO, 100);
+                    Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
                     timeExe = 1.5;
                     break;
             }
@@ -70,12 +69,12 @@ void controleMotor(std::atomic<bool>& run)
                 ;;
             }
             
-            Raspberry::Motores::setDirPwm(Raspberry::Comando::PARADO, 100);
+            Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
         }
     }
 
     // Desliga os motores
-    Raspberry::Motores::stopPWM();
+    Raspberry::Motores::stop();
 }
 
 /* -------- Main -------- */
@@ -115,7 +114,6 @@ int main(int argc, char *argv[])
             {
                 std::unique_lock<std::mutex> lock(mutex);
                 server.receiveBytes(sizeof(comando), (Raspberry::Byte *) &comando); 
-                server.receiveBytes(sizeof(pwmMotor), (Raspberry::Byte *) pwmMotor); 
             }         
 
             // Acorda a thread para executar o comando
