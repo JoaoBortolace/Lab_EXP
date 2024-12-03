@@ -17,7 +17,7 @@ Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
 void controleMotor(std::atomic<bool>& run)
 {
     // Inicializa os GPIOs da ponte H
-    Raspberry::Motores::init();
+    Raspberry::Motores::initPwm();
 
     while(run) {
         std::unique_lock<std::mutex> lock(mutex);
@@ -27,39 +27,39 @@ void controleMotor(std::atomic<bool>& run)
 
         // Modo manual
         if (comando < Raspberry::Comando::AUTO_PARADO) {
-            Raspberry::Motores::setDir(comando);
+            Raspberry::Motores::setDirAjustado(comando);
         }
         else { // Modo automático            
             double timeExe = 0.0;
 
             switch (comando) {
                 case Raspberry::Comando::AUTO_180_ESQUERDA:
-                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
+                    Raspberry::Motores::setDirAjustado(Raspberry::Comando::GIRA_ESQUERDA);
                     timeExe = 0.9;
                     break;
 
                 case Raspberry::Comando::AUTO_180_DIREITA:
-                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
+                    Raspberry::Motores::setDirAjustado(Raspberry::Comando::GIRA_DIREITA);
                     timeExe = 0.9;
                     break;
 
                 case Raspberry::Comando::AUTO_90_ESQUERDA:
-                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_ESQUERDA);
+                    Raspberry::Motores::setDirAjustado(Raspberry::Comando::GIRA_ESQUERDA);
                     timeExe = 0.5;
                     break;
 
                 case Raspberry::Comando::AUTO_90_DIREITA:
-                    Raspberry::Motores::setDir(Raspberry::Comando::GIRA_DIREITA);
+                    Raspberry::Motores::setDirAjustado(Raspberry::Comando::GIRA_DIREITA);
                     timeExe = 0.5;
                     break;
 
                 case Raspberry::Comando::AUTO_FRENTE:
-                    Raspberry::Motores::setDir(Raspberry::Comando::FRENTE);
+                    Raspberry::Motores::setDirAjustado(Raspberry::Comando::FRENTE);
                     timeExe = 1.8;
                     break;
 
                 default:
-                    Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
+                    Raspberry::Motores::setDirAjustado(Raspberry::Comando::PARADO);
                     timeExe = 1.5;
                     break;
             }
@@ -69,12 +69,12 @@ void controleMotor(std::atomic<bool>& run)
                 ;;
             }
             
-            Raspberry::Motores::setDir(Raspberry::Comando::PARADO);
+            Raspberry::Motores::setDirAjustado(Raspberry::Comando::PARADO);
         }
     }
 
     // Desliga os motores
-    Raspberry::Motores::stop();
+    Raspberry::Motores::stopPWM();
 }
 
 /* -------- Main -------- */

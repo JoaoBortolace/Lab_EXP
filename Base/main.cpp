@@ -15,9 +15,9 @@
 #define ESCALA_MAX      0.4f 
 #define ESCALA_MIN      0.03f
 #define ESCALA          ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS)
-#define THRESHOLD       0.65f
+#define THRESHOLD       0.7f
 
-#define ESCALA_DIST_MIN 0.075f
+#define ESCALA_DIST_MIN 0.06f
 
 /* -------- Variáveis Globais -------- */
 static Mat_<Raspberry::Cor> teclado;
@@ -40,6 +40,7 @@ void mouse_callback(int event, int x, int y, int flags, void *usedata)
         // Alterna entre o controle manual ou automático
         if (comando == Raspberry::Comando::ALTERNA_MODO) {
             controle = static_cast<Raspberry::Controle>(~controle & 1);
+            Raspberry::limpaTeclado(teclado, comando);
         }
     }
     else if (event == EVENT_LBUTTONUP) {

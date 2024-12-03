@@ -285,6 +285,70 @@ namespace Raspberry
         }
 
         /*
+         * Seta a direção de rotação dos motores, conforme o comando passado
+         */
+        inline void setDirAjustado(Comando comando) 
+        {
+            switch (comando) {
+                case FRENTE:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, 100);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, 90);
+                    break;
+                case ATRAS:
+                    softPwmWrite(M1_A, 100);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, 90);
+                    softPwmWrite(M2_B, 0);
+                    break;
+                case DIAGONAL_FRENTE_DIREITA:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, 100);
+                    break;
+                case DIAGONAL_FRENTE_ESQUERDA:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, 100);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, 0);
+                    break;
+                case DIAGONAL_ATRAS_DIREITA:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, 100);
+                    softPwmWrite(M2_B, 0);
+                    break;
+                case DIAGONAL_ATRAS_ESQUERDA:
+                    softPwmWrite(M1_A, 100);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, 0);
+                    break;
+                case GIRA_ESQUERDA:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, 100);
+                    softPwmWrite(M2_A, 100);
+                    softPwmWrite(M2_B, 0);
+                    break;
+                case GIRA_DIREITA:
+                    softPwmWrite(M1_A, 100);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, 100);
+                    break;
+                case PARADO:         
+                default:
+                    softPwmWrite(M1_A, 0);
+                    softPwmWrite(M1_B, 0);
+                    softPwmWrite(M2_A, 0);
+                    softPwmWrite(M2_B, 0);
+                    break;
+            }
+        }
+
+        /*
          * Seta a velocidae de rotação dos motores, conforme o comando passado
          */
         inline void setVelPWM(int velocidades[]) 
@@ -373,7 +437,7 @@ namespace Raspberry
     }
 
     /*
-     *  Retorna para a cor padrão da seta do comando correspondente 
+     * Retorna para a cor padrão da seta do comando correspondente 
      */
     inline void limpaTeclado(Mat_<Cor>& teclado, Comando comando) {
         switch (comando)
@@ -403,7 +467,7 @@ namespace Raspberry
                 arrowedLine(teclado, Point(180, 120), Point(220, 120), Paleta::blue03, 3);
                 break;
             case ALTERNA_MODO:
-                rectangle(teclado, Point(115, 115), Point(125, 125), Paleta::blue03, -1);
+                getTeclado(teclado);
                 break;
             case NAO_SELECIONADO:
             default:
@@ -663,6 +727,9 @@ namespace ImageProcessing
             }
         }
 
+        /*
+         * Retorna a posição da maior correlação encontrada
+         */
         inline Raspberry::FindPos getMaxCorrelacao(Mat_<Raspberry::Flt>& frameBufFlt, Mat_<Raspberry::Flt> modelos[], Raspberry::FindPos corrBuf[], int numEscalas, float escalas[])
         {
             // Realiza o template matching pelas diferentes escalas e captura a maior correlação
