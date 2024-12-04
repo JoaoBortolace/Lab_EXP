@@ -55,7 +55,7 @@ void controleMotor(std::atomic<bool>& run)
 
                 case Raspberry::Comando::AUTO_FRENTE:
                     Raspberry::Motores::setDirAjustado(Raspberry::Comando::FRENTE);
-                    timeExe = 2;
+                    timeExe = 4;
                     break;
 
                 default:

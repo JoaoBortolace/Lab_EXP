@@ -836,7 +836,7 @@ namespace ControleAutomatico
                 comando = Raspberry::Comando::PARADO;
 
                 double tempoDecorrido = Raspberry::timeSinceEpoch() - timer;
-                if (tempoDecorrido > 2.0 && enquadrado) {
+                if (tempoDecorrido > 2.0) {
                     controleEstado = Estados::IDENTIFICA;
                     inicioDelay = true;
                 }

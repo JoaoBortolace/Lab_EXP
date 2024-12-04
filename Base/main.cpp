@@ -11,13 +11,13 @@
 #define TEMPLATE_SIZE   401
 #define NUM_SIZE        150
 
-#define NUM_ESCALAS     20
+#define NUM_ESCALAS     32
 #define ESCALA_MAX      0.4f 
 #define ESCALA_MIN      0.03f
 #define ESCALA          ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS)
-#define THRESHOLD       0.55f
+#define THRESHOLD       0.65f
 
-#define ESCALA_DIST_MIN 0.09f
+#define ESCALA_DIST_MIN 0.085f
 
 /* -------- Variáveis Globais -------- */
 static Mat_<Raspberry::Cor> teclado;
