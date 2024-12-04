@@ -292,14 +292,14 @@ namespace Raspberry
             switch (comando) {
                 case FRENTE:
                     softPwmWrite(M1_A, 0);
-                    softPwmWrite(M1_B, 88);
+                    softPwmWrite(M1_B, 68);
                     softPwmWrite(M2_A, 0);
-                    softPwmWrite(M2_B, 100);
+                    softPwmWrite(M2_B, 80);
                     break;
                 case ATRAS:
-                    softPwmWrite(M1_A, 88);
+                    softPwmWrite(M1_A, 68);
                     softPwmWrite(M1_B, 0);
-                    softPwmWrite(M2_A, 100);
+                    softPwmWrite(M2_A, 80);
                     softPwmWrite(M2_B, 0);
                     break;
                 case DIAGONAL_FRENTE_DIREITA:
@@ -771,7 +771,7 @@ namespace MNIST
         Mat_<Raspberry::Flt> mnist_num = imagem(region);  
         
         // Redimendiona a imagem para o tamanho das imagens MNIST
-        resize(mnist_num, mnist_num, Size(MNIST_SIZE, MNIST_SIZE), INTER_LINEAR);    
+        resize(mnist_num, mnist_num, Size(MNIST_SIZE, MNIST_SIZE), INTER_CUBIC);    
         
         Mat mnist_int;
         mnist_num.convertTo(mnist_int, CV_8UC1, 255.0);    
