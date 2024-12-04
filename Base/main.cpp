@@ -15,7 +15,7 @@
 #define ESCALA_MAX      0.4f 
 #define ESCALA_MIN      0.03f
 #define ESCALA          ((ESCALA_MAX - ESCALA_MIN) / NUM_ESCALAS)
-#define THRESHOLD       0.65f
+#define THRESHOLD       0.6f
 
 #define ESCALA_DIST_MIN 0.085f
 
@@ -23,9 +23,7 @@
 static Mat_<Raspberry::Cor> teclado;
 static Raspberry::Controle controle = Raspberry::Controle::MANUAL;
 static Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
-
-ControleAutomatico::Estados controleEstado = ControleAutomatico::Estados::BUSCA;
-
+static ControleAutomatico::Estados controleEstado = ControleAutomatico::Estados::BUSCA;
 
 /* -------- Callbacks -------- */
 void mouse_callback(int event, int x, int y, int flags, void *usedata)

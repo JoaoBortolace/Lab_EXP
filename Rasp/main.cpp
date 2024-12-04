@@ -10,7 +10,6 @@
 /* -------- Variáveis Globais -------- */
 std::mutex mutex;
 std::condition_variable cv_motor;
-
 Raspberry::Comando comando = Raspberry::Comando::NAO_SELECIONADO;
 
 /* -------- Thread de controle dos motores -------- */
@@ -60,7 +59,7 @@ void controleMotor(std::atomic<bool>& run)
 
                 default:
                     Raspberry::Motores::setDirAjustado(Raspberry::Comando::PARADO);
-                    timeExe = 1.5;
+                    timeExe = 10;
                     break;
             }
 
